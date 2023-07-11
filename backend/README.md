@@ -17,3 +17,7 @@ If you want to leave your virtual environment, run `deactivate`.
 To install all the dependencies, run `python3 -m pip install -r requirements.txt`.
 
 Make sure to update this everytime a new package is installed. You can do this by doing `pip freeze > requirements.txt`
+
+### Environment Variables
+
+Secrets need to be stored as environment variables. To do this, create a `.env` file, and ask the current lead engineer for the latest values.
