@@ -43,7 +43,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ensure compatibility with the built in management commands.
     """
 
-    student_id = models.CharField(max_length=9, primary_key=True)
+    student_id = models.CharField(max_length=9)
     email = models.EmailField(blank=True, default="", unique=True)
     name = models.CharField(max_length=200, blank=True, default="")
 
