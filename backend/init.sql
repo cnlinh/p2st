@@ -47,9 +47,9 @@ CREATE TABLE questions (
 
 CREATE TABLE user_questions (
   id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT,
-  question_id BIGINT,
-  conversation_id BIGINT,
+  user_id BIGINT NOT NULL,
+  question_id BIGINT NOT NULL,
+  conversation_id BIGINT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   text TEXT NOT NULL,
   parent_question_id BIGINT,
@@ -64,7 +64,7 @@ CREATE TABLE user_questions (
 
 CREATE TABLE answers (
   id BIGSERIAL PRIMARY KEY,
-  user_question_id BIGINT,
+  user_question_id BIGINT NOT NULL,
   text TEXT NOT NULL,
   quality INT, -- rating from user, scale of 1-5
   relevance INT, -- rating from user, scale of 1-5
@@ -76,8 +76,8 @@ CREATE TABLE answers (
 
 CREATE TABLE recommendations (
   id BIGSERIAL PRIMARY KEY,
-  parent_question_id BIGINT,
-  user_id BIGINT,
+  parent_question_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
   hit BOOLEAN, -- whether the user actually asked our recommended qn
   quality INT, -- rating from user, scale of 1-5
   relevance INT, -- rating from user, scale of 1-5
