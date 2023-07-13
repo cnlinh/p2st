@@ -6,6 +6,7 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
+from authuser.models import User
 
 
 class Topic(models.Model):
@@ -29,7 +30,7 @@ class Conversation(models.Model):
 
 class Question(models.Model):
     id = models.BigAutoField(primary_key=True)
-    topic = models.ForeignKey("Topics", models.DO_NOTHING, blank=True, null=True)
+    topic = models.ForeignKey(Topic, models.DO_NOTHING, blank=True, null=True)
     text = models.TextField()
     embedding = models.TextField(blank=True, null=True)  # This field type is a guess.
     difficulty = models.FloatField()
@@ -41,9 +42,9 @@ class Question(models.Model):
 
 class UserQuestion(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey("Users", models.DO_NOTHING)
-    question = models.ForeignKey(Questions, models.DO_NOTHING)
-    conversation = models.ForeignKey(Conversations, models.DO_NOTHING)
+    user = models.ForeignKey(User, models.DO_NOTHING)
+    question = models.ForeignKey(Question, models.DO_NOTHING)
+    conversation = models.ForeignKey(Conversation, models.DO_NOTHING)
     created_at = models.DateTimeField(blank=True, null=True)
     text = models.TextField()
     parent_question = models.ForeignKey(
@@ -58,7 +59,7 @@ class UserQuestion(models.Model):
 
 class Answer(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user_question = models.ForeignKey("UserQuestions", models.DO_NOTHING)
+    user_question = models.ForeignKey(UserQuestion, models.DO_NOTHING)
     text = models.TextField()
     quality = models.IntegerField(blank=True, null=True)
     relevance = models.IntegerField(blank=True, null=True)
@@ -71,8 +72,8 @@ class Answer(models.Model):
 
 class Recommendation(models.Model):
     id = models.BigAutoField(primary_key=True)
-    parent_question = models.ForeignKey("UserQuestions", models.DO_NOTHING)
-    user = models.ForeignKey("Users", models.DO_NOTHING)
+    parent_question = models.ForeignKey(UserQuestion, models.DO_NOTHING)
+    user = models.ForeignKey(User, models.DO_NOTHING)
     hit = models.BooleanField(blank=True, null=True)
     quality = models.IntegerField(blank=True, null=True)
     relevance = models.IntegerField(blank=True, null=True)
