@@ -8,7 +8,7 @@
 from django.db import models
 
 
-class Topics(models.Model):
+class Topic(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=50)
     created_at = models.DateTimeField(blank=True, null=True)
@@ -18,7 +18,7 @@ class Topics(models.Model):
         db_table = "topics"
 
 
-class Conversations(models.Model):
+class Conversation(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(blank=True, null=True)
 
@@ -27,7 +27,7 @@ class Conversations(models.Model):
         db_table = "conversations"
 
 
-class Questions(models.Model):
+class Question(models.Model):
     id = models.BigAutoField(primary_key=True)
     topic = models.ForeignKey("Topics", models.DO_NOTHING, blank=True, null=True)
     text = models.TextField()
@@ -39,7 +39,7 @@ class Questions(models.Model):
         db_table = "questions"
 
 
-class UserQuestions(models.Model):
+class UserQuestion(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey("Users", models.DO_NOTHING)
     question = models.ForeignKey(Questions, models.DO_NOTHING)
@@ -56,7 +56,7 @@ class UserQuestions(models.Model):
         unique_together = (("user", "question", "parent_question"),)
 
 
-class Answers(models.Model):
+class Answer(models.Model):
     id = models.BigAutoField(primary_key=True)
     user_question = models.ForeignKey("UserQuestions", models.DO_NOTHING)
     text = models.TextField()
@@ -69,7 +69,7 @@ class Answers(models.Model):
         db_table = "answers"
 
 
-class Recommendations(models.Model):
+class Recommendation(models.Model):
     id = models.BigAutoField(primary_key=True)
     parent_question = models.ForeignKey("UserQuestions", models.DO_NOTHING)
     user = models.ForeignKey("Users", models.DO_NOTHING)
