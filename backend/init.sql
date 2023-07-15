@@ -9,9 +9,9 @@ DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     student_id VARCHAR(9) UNIQUE NOT NULL, -- NUS student ID
-    email character varying(254) NOT NULL,
+    email character varying(254) UNIQUE NOT NULL,
     password VARCHAR(128) NOT NULL,
-    name character varying(200),
+    name character varying(200) NOT NULL,
 
     is_staff boolean NOT NULL,
     is_active boolean NOT NULL,

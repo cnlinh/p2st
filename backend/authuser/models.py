@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserM
 from django.utils import timezone
 
 
+# https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#substituting-a-custom-user-model
 class CustomUserManager(UserManager):
     def _create_user(self, email, password, **extra_fields):
         """
@@ -43,9 +44,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     ensure compatibility with the built in management commands.
     """
 
-    student_id = models.CharField(max_length=9)
-    email = models.EmailField(blank=True, default="", unique=True)
-    name = models.CharField(max_length=200, blank=True, default="")
+    student_id = models.CharField(max_length=9, unique=True)
+    email = models.EmailField(default="", unique=True)
+    name = models.CharField(max_length=200, default="")
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
