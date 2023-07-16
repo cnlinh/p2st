@@ -35,7 +35,7 @@ class CustomUserManager(UserManager):
         return self._create_user(email, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser):
     """
     User model that uses email addresses instead of usernames, and
     name instead of first / last name fields.
@@ -72,3 +72,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.name or self.email.split("@")[0]
+
+    def has_perm(self, perm, obj=None):
+        return self.is_superuser
+
+    def has_module_perms(self, app_label):
+        return self.is_superuser
