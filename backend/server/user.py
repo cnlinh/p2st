@@ -1,9 +1,13 @@
 from django.contrib.auth import login, password_validation
 from django.shortcuts import render
-from rest_framework import exceptions, generics, serializers
+from rest_framework import exceptions, status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from authuser.models import User
+
+
+class SignupService:
+    pass
 
 
 class SignupSerializer(serializers.Serializer):
@@ -19,6 +23,7 @@ class SignupSerializer(serializers.Serializer):
 
     def create(self, validated_data, **kwargs):
         user: User
+        # TO-DO: Move business logic to SignupService
         try:
             user = User.objects.create(
                 student_id=validated_data["student_id"],
@@ -37,6 +42,20 @@ class SignupSerializer(serializers.Serializer):
         return user
 
 
+class SignupView(APIView):
+    """
+    View to create a new user in the system.
+    """
+
+    def post(self, request):
+        # used for validating and deserializing input, and for serializing output
+        serializer = SignupSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 # class UserSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = User
@@ -49,7 +68,3 @@ class SignupSerializer(serializers.Serializer):
 #         user.set_password(validated_data["password"])
 #         user.save()
 #         return user
-
-
-class SignupViewset(generics.CreateAPIView):
-    serializer_class = SignupSerializer
