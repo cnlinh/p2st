@@ -6,7 +6,7 @@ from authuser.models import User
 class Topic(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=50)
-    created_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -15,7 +15,7 @@ class Topic(models.Model):
 
 class Conversation(models.Model):
     id = models.BigAutoField(primary_key=True)
-    created_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -40,7 +40,7 @@ class Answer(models.Model):
     text = models.TextField()
     quality = models.IntegerField(blank=True, null=True)
     relevance = models.IntegerField(blank=True, null=True)
-    created_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -59,7 +59,7 @@ class Message(models.Model):
     )
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, blank=True, null=True)
     text = models.TextField()
-    created_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -73,7 +73,7 @@ class Recommendation(models.Model):
     hit = models.BooleanField(blank=True, null=True)
     quality = models.IntegerField(blank=True, null=True)
     relevance = models.IntegerField(blank=True, null=True)
-    created_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         managed = False
