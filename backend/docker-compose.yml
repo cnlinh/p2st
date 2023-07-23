@@ -12,15 +12,15 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-  server:
-    build: .
-    restart: always
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./:/app
-    depends_on:
-      - db
+  # server:
+  #   build: .
+  #   restart: always
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./:/app
+  #   depends_on:
+  #     - db
 
 volumes:
   pgdata:
