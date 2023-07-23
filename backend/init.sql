@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS recommendations;
+DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS answers;
-DROP TABLE IF EXISTS user_questions;
 DROP TABLE IF EXISTS questions;
 DROP TABLE IF EXISTS conversations;
 DROP TABLE IF EXISTS topics;
@@ -45,38 +45,39 @@ CREATE TABLE questions (
   FOREIGN KEY (topic_id) REFERENCES topics(id)
 );
 
-CREATE TABLE user_questions (
-  id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT NOT NULL,
-  question_id BIGINT NOT NULL,
-  conversation_id BIGINT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  text TEXT NOT NULL,
-  parent_question_id BIGINT,
-
-  UNIQUE (user_id, question_id, parent_question_id),
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (question_id) REFERENCES questions(id),
-  FOREIGN KEY (parent_question_id) REFERENCES user_questions(id),
-  FOREIGN KEY (conversation_id) REFERENCES conversations(id)
-);
-
-
 CREATE TABLE answers (
   id BIGSERIAL PRIMARY KEY,
-  user_question_id BIGINT NOT NULL,
+  question_id BIGINT NOT NULL,
   text TEXT NOT NULL,
   quality INT, -- rating from user, scale of 1-5
   relevance INT, -- rating from user, scale of 1-5
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  FOREIGN KEY (user_question_id) REFERENCES user_questions(id)
+  FOREIGN KEY (question_id) REFERENCES questions(id)
 );
 
+CREATE TABLE messages (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  conversation_id BIGINT NOT NULL,
+  parent_message_id BIGINT,
+  question_id BIGINT,
+  answer_id BIGINT,
+  text TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+  FOREIGN KEY (parent_message_id) REFERENCES messages(id),
+  FOREIGN KEY (question_id) REFERENCES questions(id),
+  FOREIGN KEY (answer_id) REFERENCES answers(id),
+
+  CHECK (question_id IS NOT NULL OR answer_id IS NOT NULL)
+);
 
 CREATE TABLE recommendations (
   id BIGSERIAL PRIMARY KEY,
-  parent_question_id BIGINT NOT NULL,
+  message_id BIGINT NOT NULL,
   user_id BIGINT NOT NULL,
   hit BOOLEAN, -- whether the user actually asked our recommended qn
   quality INT, -- rating from user, scale of 1-5
@@ -84,6 +85,6 @@ CREATE TABLE recommendations (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (parent_question_id) REFERENCES user_questions(id)
+  FOREIGN KEY (message_id) REFERENCES messages(id)
 );
 

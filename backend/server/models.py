@@ -1,10 +1,4 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from authuser.models import User
 
@@ -30,9 +24,9 @@ class Conversation(models.Model):
 
 class Question(models.Model):
     id = models.BigAutoField(primary_key=True)
-    topic = models.ForeignKey(Topic, models.DO_NOTHING, blank=True, null=True)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, blank=True, null=True)
     text = models.TextField()
-    embedding = models.TextField(blank=True, null=True)  # This field type is a guess.
+    embedding = ArrayField(models.FloatField(blank=True, null=True))
     difficulty = models.FloatField()
 
     class Meta:
@@ -40,26 +34,9 @@ class Question(models.Model):
         db_table = "questions"
 
 
-class UserQuestion(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(User, models.DO_NOTHING)
-    question = models.ForeignKey(Question, models.DO_NOTHING)
-    conversation = models.ForeignKey(Conversation, models.DO_NOTHING)
-    created_at = models.DateTimeField(blank=True, null=True)
-    text = models.TextField()
-    parent_question = models.ForeignKey(
-        "self", models.DO_NOTHING, blank=True, null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "user_questions"
-        unique_together = (("user", "question", "parent_question"),)
-
-
 class Answer(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user_question = models.ForeignKey(UserQuestion, models.DO_NOTHING)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
     text = models.TextField()
     quality = models.IntegerField(blank=True, null=True)
     relevance = models.IntegerField(blank=True, null=True)
@@ -70,10 +47,29 @@ class Answer(models.Model):
         db_table = "answers"
 
 
+class Message(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
+    parent_message = models.ForeignKey(
+        "self", on_delete=models.CASCADE, blank=True, null=True
+    )
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, blank=True, null=True
+    )
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, blank=True, null=True)
+    text = models.TextField()
+    created_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "messages"
+
+
 class Recommendation(models.Model):
     id = models.BigAutoField(primary_key=True)
-    parent_question = models.ForeignKey(UserQuestion, models.DO_NOTHING)
-    user = models.ForeignKey(User, models.DO_NOTHING)
+    message = models.ForeignKey(Message, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     hit = models.BooleanField(blank=True, null=True)
     quality = models.IntegerField(blank=True, null=True)
     relevance = models.IntegerField(blank=True, null=True)
