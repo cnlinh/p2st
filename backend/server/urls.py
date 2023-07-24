@@ -10,5 +10,12 @@ urlpatterns = [
     path("login", TokenObtainPairView.as_view(), name="login"),
     path("token/refresh", TokenRefreshView.as_view(), name="token_refresh"),
     path("register", signup.SignupView.as_view(), name="register"),
-    path("conversation", conversation.ConversationView.as_view(), name="conversation"),
+    path(
+        "conversation/<int:id>",
+        conversation.ConversationView.as_view(),
+        name="conversation",
+    ),
+    path(
+        "conversation", conversation.InitConversationView.as_view(), name="conversation"
+    ),
 ]
