@@ -1,6 +1,10 @@
 absl-py==1.4.0
+aiohttp==3.8.5
+aiosignal==1.3.1
 asgiref==3.7.2
 astunparse==1.6.3
+async-timeout==4.0.2
+attrs==23.1.0
 cachetools==5.3.1
 certifi==2023.5.7
 charset-normalizer==3.2.0
@@ -11,6 +15,7 @@ djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2
 djangorestframework-stubs==3.14.2
 flatbuffers==23.5.26
+frozenlist==1.4.0
 gast==0.4.0
 google-auth==2.22.0
 google-auth-oauthlib==1.0.0
@@ -22,10 +27,12 @@ keras==2.13.1
 libclang==16.0.6
 Markdown==3.4.3
 MarkupSafe==2.1.3
+multidict==6.0.4
 mypy==1.4.1
 mypy-extensions==1.0.0
 numpy==1.24.3
 oauthlib==3.2.2
+openai==0.27.8
 opt-einsum==3.3.0
 packaging==23.1
 protobuf==4.23.4
@@ -48,6 +55,7 @@ tensorflow-hub==0.14.0
 tensorflow-macos==2.13.0
 tensorflow-metal==1.0.1
 termcolor==2.3.0
+tqdm==4.65.0
 types-pytz==2023.3.0.0
 types-PyYAML==6.0.12.10
 types-requests==2.31.0.1
@@ -56,3 +64,4 @@ typing_extensions==4.5.0
 urllib3==1.26.16
 Werkzeug==2.3.6
 wrapt==1.15.0
+yarl==1.9.2
