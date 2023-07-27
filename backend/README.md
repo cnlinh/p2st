@@ -77,3 +77,10 @@ The database schema notes can be found [here](https://docs.google.com/document/d
 To completely erase the database data, `docker volume rm backend_pgdata`.
 
 If for any reason you need to "delete" a migration record, delete it from the `django_migrations` table.
+
+### Django REST Framework
+
+- Serializers provide serialization and deserialization, allowing parsed data to be converted back into complex types
+- When deserializing data, you always need to call `is_valid()` before attempting to access the validated data, or save an object instance
+- Calling `.save()` on a serializer will either create a new instance, or update an existing instance
+-

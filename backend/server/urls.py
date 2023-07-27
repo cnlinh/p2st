@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from . import signup, question, conversation
+from . import signup, conversation
 
 urlpatterns = [
     path("login", TokenObtainPairView.as_view(), name="login"),
@@ -16,6 +16,8 @@ urlpatterns = [
         name="conversation",
     ),
     path(
-        "conversation", conversation.InitConversationView.as_view(), name="conversation"
+        "conversation",
+        conversation.InitConversationView.as_view(),
+        name="new_conversation",
     ),
 ]
