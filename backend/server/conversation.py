@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import tensorflow_hub as hub
 from typing import List, TypedDict, Optional
-import traceback
 
 from django.contrib.auth import login, password_validation
 from django.db.models import QuerySet
@@ -113,7 +112,6 @@ class MessageSerializer(serializers.ModelSerializer):
 
 def generate_embedding(embedding_model, text: str) -> np.ndarray:
     embeddings = embedding_model([text])[0].numpy()
-    print(embeddings, type(embeddings))
     return embeddings
 
 
@@ -207,7 +205,6 @@ def save_message(
     answer_id: Optional[int],
     text: str,
 ) -> Message:
-    print(question_id, answer_id)
     msg_serializer = MessageSerializer(
         data={
             "user": user_id,
@@ -218,18 +215,17 @@ def save_message(
             "text": text,
         }
     )
-    print("HERE")
     msg_serializer.is_valid(raise_exception=True)
     return msg_serializer.save()
 
 
 class ConversationView(APIView):
     permission_classes = [IsAuthenticated]
-    # embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
+    embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
     def post(self, request, id):
         # 1. embed question
-        # embeddings = generate_embedding(self.embedding_model, request.data["text"])
+        embeddings = generate_embedding(self.embedding_model, request.data["text"])
         # 2. if existing, get answer from db
         # most_similar_question = find_similar(
         #     embeddings, questions=Question.objects.all()
@@ -243,13 +239,13 @@ class ConversationView(APIView):
         # 3. else, call chatgpt API to generate answer
 
         # new question:
-        qn = save_question(request.data["text"], [])
-        print("qn", qn)
+        qn = save_question(request.data["text"], embeddings.tolist())
+
         try:
             past_messages = get_conversation_messages(Message.objects.all(), id)
-            print("past_messages", past_messages)
+
             parent_message = past_messages[-1]["id"] if len(past_messages) > 0 else None
-            print("parent_message", parent_message)
+
             qn_msg = save_message(
                 request.user.id,
                 id,
@@ -258,11 +254,10 @@ class ConversationView(APIView):
                 None,
                 request.data["text"],
             )
-            print("qn_msg", qn_msg)
 
             # skip to save money :)
-            # response = generate_answer(id, past_messages, request.data["text"])
-            response = "This is a dummy response"
+            response = generate_answer(id, past_messages, request.data["text"])
+            # response = "This is a dummy response"
 
             ans = save_answer(qn.id, response)
             ans_msg = save_message(
@@ -273,6 +268,5 @@ class ConversationView(APIView):
         except exceptions.ValidationError as e:
             raise e
         except Exception as e:
-            print(traceback.format_exc())
             print(e)
             raise exceptions.APIException("Internal server error")
