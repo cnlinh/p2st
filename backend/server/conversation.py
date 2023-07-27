@@ -1,6 +1,7 @@
 import os
 import openai
 import numpy as np
+import logging
 from sklearn.metrics.pairwise import cosine_similarity
 import tensorflow_hub as hub
 from typing import List, TypedDict, Optional
@@ -13,6 +14,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Answer, Conversation, Message, Question
+
+logger = logging.getLogger(__name__)
 
 # One-time initialization
 openai.organization = os.getenv("OPENAI_ORG_ID")
@@ -124,6 +127,7 @@ def find_similar(embeddings: np.ndarray, questions) -> Optional[Question]:
         similarity = cosine_similarity([embeddings], [np.array(question.embedding)])[0][
             0
         ]
+        logger.debug("similarity to '{}': {}".format(question.text, similarity))
         if similarity > max_similarity:
             max_similarity = similarity
             most_similar_question = question
@@ -185,6 +189,10 @@ def generate_answer(
     return full_reply_content
 
 
+def fetch_answer(question_id: int) -> Answer:
+    return Answer.objects.get(question=question_id)
+
+
 def save_question(text: str, embeddings) -> Question:
     qn_serializer = QuestionSerializer(data={"text": text})
     qn_serializer.is_valid(raise_exception=True)
@@ -224,27 +232,52 @@ class ConversationView(APIView):
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
     def post(self, request, id):
-        # 1. embed question
-        embeddings = generate_embedding(self.embedding_model, request.data["text"])
-        # 2. if existing, get answer from db
-        # most_similar_question = find_similar(
-        #     embeddings, questions=Question.objects.all()
-        # )
-        # if most_similar_question is not None:
-        #     # dont regenerate answer
-        #     return Response(
-        #         {"data": "Similar to question" + str(most_similar_question)},
-        #         status=status.HTTP_201_CREATED,
-        #     )
-        # 3. else, call chatgpt API to generate answer
+        if "text" not in request.data:
+            raise exceptions.ValidationError("Missing 'text' field")
 
-        # new question:
-        qn = save_question(request.data["text"], embeddings.tolist())
-
+        question_text = request.data["text"]
         try:
             past_messages = get_conversation_messages(Message.objects.all(), id)
-
+            logger.debug("messages in conversation {}: {}".format(id, past_messages))
             parent_message = past_messages[-1]["id"] if len(past_messages) > 0 else None
+
+            embeddings = generate_embedding(self.embedding_model, question_text)
+
+            logger.debug("finding similar questions to '{}'".format(question_text))
+            most_similar_question = find_similar(
+                embeddings, questions=Question.objects.all()
+            )
+            if most_similar_question is not None:
+                logger.info(
+                    "found a similar question to '{}': question {}; '{}'".format(
+                        question_text,
+                        most_similar_question.id,
+                        most_similar_question.text,
+                    )
+                )
+                ans = fetch_answer(most_similar_question.id)
+
+                qn_msg = save_message(
+                    request.user.id,
+                    id,
+                    parent_message,
+                    most_similar_question.id,
+                    None,
+                    question_text,
+                )
+
+                ans_msg = save_message(
+                    request.user.id,
+                    id,
+                    qn_msg.id,
+                    None,
+                    ans.id,
+                    ans.text,
+                )
+                return Response({"data": ans.text}, status=status.HTTP_201_CREATED)
+
+            logger.info("new question asked: {}".format(question_text))
+            qn = save_question(question_text, embeddings.tolist())
 
             qn_msg = save_message(
                 request.user.id,
@@ -252,12 +285,12 @@ class ConversationView(APIView):
                 parent_message,
                 qn.id,
                 None,
-                request.data["text"],
+                question_text,
             )
 
-            # skip to save money :)
-            response = generate_answer(id, past_messages, request.data["text"])
+            response = generate_answer(id, past_messages, question_text)
             # response = "This is a dummy response"
+            logger.info("generated answer for question {}: {}".format(qn.id, response))
 
             ans = save_answer(qn.id, response)
             ans_msg = save_message(
