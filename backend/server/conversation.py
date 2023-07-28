@@ -27,12 +27,12 @@ SIMILARITY_THRESHOLD = 0.775
 class ConversationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Conversation
-        fields = ["id"]
+        fields = ["id", "user"]
 
     def create(self, validated_data, **kwargs) -> Conversation:
         convo: Conversation
         try:
-            convo = Conversation.objects.create()
+            convo = Conversation.objects.create(user=validated_data["user"])
         except Exception as e:
             raise exceptions.APIException(str(e))
         convo.save()
@@ -40,8 +40,10 @@ class ConversationSerializer(serializers.ModelSerializer):
 
 
 class InitConversationView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        serializer = ConversationSerializer(data={})
+        serializer = ConversationSerializer(data={"user": request.user.id})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -118,7 +120,8 @@ def generate_embedding(embedding_model, text: str) -> np.ndarray:
     return embeddings
 
 
-def find_similar(embeddings: np.ndarray, questions) -> Optional[Question]:
+# TO-DO: Use vector search (nearest neighbor)
+def find_similar_question(embeddings: np.ndarray, questions) -> Optional[Question]:
     most_similar_question = None
     max_similarity = 0
 
@@ -128,7 +131,7 @@ def find_similar(embeddings: np.ndarray, questions) -> Optional[Question]:
             0
         ]
         logger.debug("similarity to '{}': {}".format(question.text, similarity))
-        if similarity > max_similarity:
+        if similarity > SIMILARITY_THRESHOLD and similarity > max_similarity:
             max_similarity = similarity
             most_similar_question = question
 
@@ -227,6 +230,14 @@ def save_message(
     return msg_serializer.save()
 
 
+def check_conversation_permissions(user_id: int, conversation_id: int):
+    conversation = Conversation.objects.get(id=conversation_id)
+    if conversation.user.id != user_id:
+        raise exceptions.PermissionDenied(
+            "User does not have permission to access this conversation"
+        )
+
+
 class ConversationView(APIView):
     permission_classes = [IsAuthenticated]
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
@@ -237,14 +248,17 @@ class ConversationView(APIView):
 
         question_text = request.data["text"]
         try:
+            check_conversation_permissions(request.user.id, id)
+
             past_messages = get_conversation_messages(Message.objects.all(), id)
             logger.debug("messages in conversation {}: {}".format(id, past_messages))
+
             parent_message = past_messages[-1]["id"] if len(past_messages) > 0 else None
 
             embeddings = generate_embedding(self.embedding_model, question_text)
 
             logger.debug("finding similar questions to '{}'".format(question_text))
-            most_similar_question = find_similar(
+            most_similar_question = find_similar_question(
                 embeddings, questions=Question.objects.all()
             )
             if most_similar_question is not None:
@@ -255,9 +269,10 @@ class ConversationView(APIView):
                         most_similar_question.text,
                     )
                 )
-                ans = fetch_answer(most_similar_question.id)
+                answer = fetch_answer(most_similar_question.id)
+                response = answer.text
 
-                qn_msg = save_message(
+                question_message = save_message(
                     request.user.id,
                     id,
                     parent_message,
@@ -269,37 +284,40 @@ class ConversationView(APIView):
                 ans_msg = save_message(
                     request.user.id,
                     id,
-                    qn_msg.id,
+                    question_message.id,
                     None,
-                    ans.id,
-                    ans.text,
+                    answer.id,
+                    response,
                 )
-                return Response({"data": ans.text}, status=status.HTTP_201_CREATED)
+                return Response({"data": response}, status=status.HTTP_201_CREATED)
 
             logger.info("new question asked: {}".format(question_text))
-            qn = save_question(question_text, embeddings.tolist())
+            question = save_question(question_text, embeddings.tolist())
 
-            qn_msg = save_message(
+            question_message = save_message(
                 request.user.id,
                 id,
                 parent_message,
-                qn.id,
+                question.id,
                 None,
                 question_text,
             )
 
             response = generate_answer(id, past_messages, question_text)
             # response = "This is a dummy response"
-            logger.info("generated answer for question {}: {}".format(qn.id, response))
+            logger.info(
+                "generated answer for question {}: {}".format(question.id, response)
+            )
 
-            ans = save_answer(qn.id, response)
-            ans_msg = save_message(
-                request.user.id, id, qn_msg.id, None, ans.id, response
+            answer = save_answer(question.id, response)
+            save_message(
+                request.user.id, id, question_message.id, None, answer.id, response
             )
 
             return Response({"data": response}, status=status.HTTP_201_CREATED)
         except exceptions.ValidationError as e:
+            logger.error(e)
             raise e
         except Exception as e:
-            print(e)
+            logger.error(e)
             raise exceptions.APIException("Internal server error")
