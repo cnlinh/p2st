@@ -148,10 +148,21 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
     },
     "root": {
         "handlers": ["console"],
         "level": "DEBUG",  # change logging level here
+    },
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {name} {asctime} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
     },
 }
