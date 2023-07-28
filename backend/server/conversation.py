@@ -315,7 +315,7 @@ class ConversationView(APIView):
             )
 
             return Response({"data": response}, status=status.HTTP_201_CREATED)
-        except exceptions.ValidationError as e:
+        except (exceptions.ValidationError, exceptions.PermissionDenied) as e:
             logger.error(e)
             raise e
         except Exception as e:
