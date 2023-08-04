@@ -21,19 +21,8 @@ import "./vendors/jquery/jquery.min.js";
 import "./vendors/choices/choices.min.js";
 import "./assets/js/theme.js";
 
-import { mapActions, mapState } from "vuex";
-
 export default {
   name: "App",
-
-  computed: {
-    ...mapState("auth", ["status"]),
-  },
-
-  methods: {
-    ...mapActions('admin', ['initData']),
-    ...mapActions('auth', ['initUser']),
-  },
 
   async created() {
     if (this.status.loggedIn) {

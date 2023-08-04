@@ -1,4 +1,4 @@
-# Forizone
+# Friday
 
 ## Project setup
 ```
