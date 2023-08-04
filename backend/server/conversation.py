@@ -14,7 +14,7 @@ from rest_framework import exceptions, status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Answer, Conversation, Message, Question
+from .models import Answer, Conversation, Message, Question, Role
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +67,7 @@ class QuestionSerializer(serializers.ModelSerializer):
                 text=validated_data["text"],
                 embedding=validated_data["embeddings"],
                 difficulty=0.5,  # TO-DO
+                created_by=validated_data["created_by"],
             )
         except Exception as e:
             raise exceptions.APIException(str(e))
@@ -200,8 +201,9 @@ def fetch_answer(question_id: int) -> Answer:
     return Answer.objects.get(question=question_id)
 
 
-def save_question(text: str, embeddings) -> Question:
-    qn_serializer = QuestionSerializer(data={"text": text})
+def save_question(text: str, embeddings, created_by: Role) -> Question:
+    print("created_by", created_by)
+    qn_serializer = QuestionSerializer(data={"text": text, "created_by": created_by})
     qn_serializer.is_valid(raise_exception=True)
     return qn_serializer.save(embeddings=embeddings)
 
@@ -299,7 +301,7 @@ class ConversationView(APIView):
                 )
 
             logger.info("new question asked: {}".format(question_text))
-            question = save_question(question_text, embeddings.tolist())
+            question = save_question(question_text, embeddings.tolist(), Role.USER)
 
             question_message = save_message(
                 request.user.id,
