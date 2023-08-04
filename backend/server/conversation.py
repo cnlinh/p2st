@@ -5,6 +5,7 @@ import logging
 from sklearn.metrics.pairwise import cosine_similarity
 import tensorflow_hub as hub
 from typing import List, TypedDict, Optional
+from pgvector.django import CosineDistance
 
 from django.contrib.auth import login, password_validation
 from django.db.models import QuerySet
@@ -64,7 +65,7 @@ class QuestionSerializer(serializers.ModelSerializer):
             qn = Question.objects.create(
                 topic=None,  # TO-DO
                 text=validated_data["text"],
-                embedding=validated_data["embeddings"],  # TO-DO
+                embedding=validated_data["embeddings"],
                 difficulty=0.5,  # TO-DO
             )
         except Exception as e:
@@ -120,22 +121,25 @@ def generate_embedding(embedding_model, text: str) -> np.ndarray:
     return embeddings
 
 
-# TO-DO: Use vector search (nearest neighbor)
-def find_similar_question(embeddings: np.ndarray, questions) -> Optional[Question]:
-    most_similar_question = None
-    max_similarity = 0
+def find_similar_question(
+    embeddings: np.ndarray, questions: QuerySet[Question]
+) -> Optional[Question]:
+    most_similar_question = (
+        questions.annotate(distance=CosineDistance("embedding", embeddings))
+        .order_by("distance")
+        .first()
+    )
 
-    for question in questions:
-        # TO-DO: store embeddings as np array in DB?
-        similarity = cosine_similarity([embeddings], [np.array(question.embedding)])[0][
-            0
-        ]
-        logger.debug("similarity to '{}': {}".format(question.text, similarity))
-        if similarity > SIMILARITY_THRESHOLD and similarity > max_similarity:
-            max_similarity = similarity
-            most_similar_question = question
+    if most_similar_question is not None:
+        similarity = 1 - most_similar_question.distance
+        if similarity > SIMILARITY_THRESHOLD:
+            logger.info(
+                "found most similar question with similarity {}".format(similarity)
+            )
+            return most_similar_question
+        return None
 
-    return most_similar_question
+    return None
 
 
 class ChatGPTMessage(TypedDict):
@@ -289,7 +293,10 @@ class ConversationView(APIView):
                     answer.id,
                     response,
                 )
-                return Response({"data": response}, status=status.HTTP_201_CREATED)
+                return Response(
+                    {"data": response, "latest_message_id": ans_msg.id},
+                    status=status.HTTP_201_CREATED,
+                )
 
             logger.info("new question asked: {}".format(question_text))
             question = save_question(question_text, embeddings.tolist())
@@ -310,11 +317,14 @@ class ConversationView(APIView):
             )
 
             answer = save_answer(question.id, response)
-            save_message(
+            ans_msg = save_message(
                 request.user.id, id, question_message.id, None, answer.id, response
             )
 
-            return Response({"data": response}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"data": response, "latest_message_id": ans_msg.id},
+                status=status.HTTP_201_CREATED,
+            )
         except (exceptions.ValidationError, exceptions.PermissionDenied) as e:
             logger.error(e)
             raise e
