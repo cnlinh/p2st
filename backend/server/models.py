@@ -1,5 +1,6 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from pgvector.django import VectorField
 from authuser.models import User
 
 
@@ -27,7 +28,7 @@ class Question(models.Model):
     id = models.BigAutoField(primary_key=True)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, blank=True, null=True)
     text = models.TextField()
-    embedding = ArrayField(models.FloatField(blank=True, null=True))
+    embedding = VectorField(dimensions=512, blank=True, null=True)
     difficulty = models.FloatField()
 
     class Meta:

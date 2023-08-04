@@ -78,6 +78,10 @@ To completely erase the database data, `docker volume rm backend_pgdata`.
 
 If for any reason you need to "delete" a migration record, delete it from the `django_migrations` table.
 
+### pgvector Setup
+
+https://github.com/pgvector/pgvector#docker
+
 ### Django REST Framework
 
 - Serializers provide serialization and deserialization, allowing parsed data to be converted back into complex types

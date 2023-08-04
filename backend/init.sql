@@ -1,3 +1,5 @@
+CREATE EXTENSION vector; -- pgvector
+
 DROP TABLE IF EXISTS recommendations;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS answers;
@@ -42,7 +44,7 @@ CREATE TABLE questions (
   id BIGSERIAL PRIMARY KEY,
   topic_id BIGINT,
   text TEXT NOT NULL,
-  embedding DOUBLE PRECISION[],
+  embedding VECTOR(512),
   difficulty REAL NOT NULL,
  
   FOREIGN KEY (topic_id) REFERENCES topics(id)
@@ -90,4 +92,3 @@ CREATE TABLE recommendations (
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (message_id) REFERENCES messages(id)
 );
-
