@@ -23,7 +23,7 @@ openai.organization = os.getenv("OPENAI_ORG_ID")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 MODEL = "gpt-3.5-turbo"
 SIMILARITY_THRESHOLD = 0.775
-GENERIC_QUESTIONS_SIMILARITY_THRESHOLD = 0.5
+GENERIC_QUESTIONS_SIMILARITY_THRESHOLD = 0.4
 
 
 class ConversationSerializer(serializers.ModelSerializer):
@@ -245,13 +245,21 @@ def check_conversation_permissions(user_id: int, conversation_id: int):
 
 
 def is_generic_question(embedding: np.ndarray) -> bool:
-    annotated = ExcludeFromCache.objects.annotate(
-        distance=CosineDistance("embedding", embedding)
-    ).order_by("distance")
+    most_similar_question = (
+        ExcludeFromCache.objects.annotate(
+            distance=CosineDistance("embedding", embedding)
+        )
+        .order_by("distance")
+        .first()
+    )
 
-    for qn in annotated:
-        similarity = 1 - qn.distance
-        print(qn.text, similarity)
+    if most_similar_question is not None:
+        similarity = 1 - most_similar_question.distance
+        logger.debug(
+            "most similar generic question: {}; {}".format(
+                most_similar_question.text, similarity
+            )
+        )
         if similarity > GENERIC_QUESTIONS_SIMILARITY_THRESHOLD:
             logger.info("found generic question with similarity {}".format(similarity))
             return True
@@ -272,7 +280,7 @@ class ConversationView(APIView):
             check_conversation_permissions(request.user.id, id)
 
             past_messages = get_conversation_messages(Message.objects.all(), id)
-            logger.debug("messages in conversation {}: {}".format(id, past_messages))
+            # logger.debug("messages in conversation {}: {}".format(id, past_messages))
 
             parent_message = past_messages[-1]["id"] if len(past_messages) > 0 else None
 
