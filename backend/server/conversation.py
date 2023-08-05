@@ -14,7 +14,7 @@ from rest_framework import exceptions, status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Answer, Conversation, Message, Question, Role
+from .models import Answer, Conversation, Message, Question, Role, ExcludeFromCache
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ openai.organization = os.getenv("OPENAI_ORG_ID")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 MODEL = "gpt-3.5-turbo"
 SIMILARITY_THRESHOLD = 0.775
+GENERIC_QUESTIONS_SIMILARITY_THRESHOLD = 0.5
 
 
 class ConversationSerializer(serializers.ModelSerializer):
@@ -202,7 +203,6 @@ def fetch_answer(question_id: int) -> Answer:
 
 
 def save_question(text: str, embeddings, created_by: Role) -> Question:
-    print("created_by", created_by)
     qn_serializer = QuestionSerializer(data={"text": text, "created_by": created_by})
     qn_serializer.is_valid(raise_exception=True)
     return qn_serializer.save(embeddings=embeddings)
@@ -244,6 +244,21 @@ def check_conversation_permissions(user_id: int, conversation_id: int):
         )
 
 
+def is_generic_question(embedding: np.ndarray) -> bool:
+    annotated = ExcludeFromCache.objects.annotate(
+        distance=CosineDistance("embedding", embedding)
+    ).order_by("distance")
+
+    for qn in annotated:
+        similarity = 1 - qn.distance
+        print(qn.text, similarity)
+        if similarity > GENERIC_QUESTIONS_SIMILARITY_THRESHOLD:
+            logger.info("found generic question with similarity {}".format(similarity))
+            return True
+
+    return False
+
+
 class ConversationView(APIView):
     permission_classes = [IsAuthenticated]
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
@@ -263,42 +278,43 @@ class ConversationView(APIView):
 
             embeddings = generate_embedding(self.embedding_model, question_text)
 
-            logger.debug("finding similar questions to '{}'".format(question_text))
-            most_similar_question = find_similar_question(
-                embeddings, questions=Question.objects.all()
-            )
-            if most_similar_question is not None:
-                logger.info(
-                    "found a similar question to '{}': question {}; '{}'".format(
-                        question_text,
-                        most_similar_question.id,
-                        most_similar_question.text,
+            if not is_generic_question(embeddings):
+                logger.debug("finding similar questions to '{}'".format(question_text))
+                most_similar_question = find_similar_question(
+                    embeddings, questions=Question.objects.all()
+                )
+                if most_similar_question is not None:
+                    logger.info(
+                        "found a similar question to '{}': question {}; '{}'".format(
+                            question_text,
+                            most_similar_question.id,
+                            most_similar_question.text,
+                        )
                     )
-                )
-                answer = fetch_answer(most_similar_question.id)
-                response = answer.text
+                    answer = fetch_answer(most_similar_question.id)
+                    response = answer.text
 
-                question_message = save_message(
-                    request.user.id,
-                    id,
-                    parent_message,
-                    most_similar_question.id,
-                    None,
-                    question_text,
-                )
+                    question_message = save_message(
+                        request.user.id,
+                        id,
+                        parent_message,
+                        most_similar_question.id,
+                        None,
+                        question_text,
+                    )
 
-                ans_msg = save_message(
-                    request.user.id,
-                    id,
-                    question_message.id,
-                    None,
-                    answer.id,
-                    response,
-                )
-                return Response(
-                    {"data": response, "latest_message_id": ans_msg.id},
-                    status=status.HTTP_201_CREATED,
-                )
+                    ans_msg = save_message(
+                        request.user.id,
+                        id,
+                        question_message.id,
+                        None,
+                        answer.id,
+                        response,
+                    )
+                    return Response(
+                        {"data": response, "latest_message_id": ans_msg.id},
+                        status=status.HTTP_201_CREATED,
+                    )
 
             logger.info("new question asked: {}".format(question_text))
             question = save_question(question_text, embeddings.tolist(), Role.USER)
