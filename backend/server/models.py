@@ -36,7 +36,7 @@ class Question(models.Model):
     text = models.TextField()
     embedding = VectorField(dimensions=512, blank=True, null=True)
     difficulty = models.FloatField()
-    created_by = models.CharField(max_length=8)
+    created_by = models.CharField(max_length=8)  # enum Role
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
@@ -84,3 +84,14 @@ class Rating(models.Model):
     class Meta:
         managed = False
         db_table = "ratings"
+
+
+class ExcludeFromCache(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    text = models.TextField()
+    embedding = VectorField(dimensions=512, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "exclude_from_cache"

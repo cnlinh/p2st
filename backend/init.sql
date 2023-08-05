@@ -41,6 +41,7 @@ CREATE TABLE conversations (
 );
 
 CREATE TYPE ROLE AS ENUM ('user', 'system');
+
 CREATE TABLE questions (
   id BIGSERIAL PRIMARY KEY,
   topic_id BIGINT,
@@ -91,3 +92,11 @@ CREATE TABLE ratings (
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (message_id) REFERENCES messages(id)
 );
+
+CREATE TABLE exclude_from_cache (
+  id BIGSERIAL PRIMARY KEY,
+  text TEXT NOT NULL,
+  embedding VECTOR(512),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
