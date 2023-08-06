@@ -8,8 +8,8 @@
             <div class="tab-pane card-chat-pane active" id="chat-0" role="tabpanel" aria-labelledby="chat-link-0">
               <div class="chat-content-body" style="display: inherit;">
                 <div class="chat-content-scroll-area scrollbar">
-                  <MessageBubble v-for="message in messages" :key="message.id" :isOwnMessage="message.role === 'user'"
-                    :text="message.content" timestamp="" />
+                  <MessageBubble v-for="message in messages" :key="message.id" :id="message.id"
+                    :isOwnMessage="message.role === 'user'" :text="message.content" timestamp="" />
                 </div>
               </div>
             </div>

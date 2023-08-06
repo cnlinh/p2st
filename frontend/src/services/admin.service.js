@@ -41,7 +41,11 @@ class AdminService {
   }
 
   rateMessage(id, score) {
-    return axios.post(`${API_URL}ratings/${id}`, { score }, { headers: authHeader() });
+    return axios
+      .post(`${API_URL}ratings/${id}`, { score }, { headers: authHeader() })
+      .then(response => {
+        console.log(response);
+      });
   }
 }
 
