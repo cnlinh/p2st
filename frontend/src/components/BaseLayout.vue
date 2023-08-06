@@ -26,19 +26,12 @@
               </div>
             </div>
             <ul class="nav" id="topics">
-              <li class="nav-item">
-                <router-link to="/home" class="nav-link">
-                  <div class="d-flex align-items-center">
-                    <span class="nav-link-icon"></span><span class="nav-link-text ps-1">Topic 1</span>
-                  </div>
-                </router-link>
-              </li>
-              <li class="nav-item">
-                <router-link to="/home" class="nav-link">
-                  <div class="d-flex align-items-center">
-                    <span class="nav-link-icon"></span><span class="nav-link-text ps-1">Topic 2</span>
-                  </div>
-                </router-link>
+              <li class="nav-item" v-for="topic in topics" :key="topic.id" :class="{ active: topic.id === selectedTopic }"
+                @click="selectTopicHandler(topic.id)">
+                <div class="d-flex align-items-center">
+                  <span class="nav-link-icon"></span>
+                  <span class="nav-link-text ps-1">{{ topic.name }}</span>
+                </div>
               </li>
             </ul>
             <li class="nav-item">
@@ -90,8 +83,18 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
+
 export default {
   name: "BaseLayout",
+
+  computed: {
+    ...mapState('admin', ['topics', 'selectedTopic'])
+  },
+
+  mounted() {
+    this.$store.dispatch('admin/initData');
+  },
 
   methods: {
     handleLogout() {
@@ -99,6 +102,10 @@ export default {
         this.$router.push("/logout");
       });
     },
+
+    selectTopicHandler(topicId) {
+      this.$store.dispatch('admin/selectTopic', topicId);
+    }
   },
 };
 </script>
@@ -117,6 +124,11 @@ export default {
 
 .active,
 .active * {
-  color: #46D0EF !important;
+  color: #fff !important;
+}
+
+#topics .nav-item {
+  cursor: pointer;
+  user-select: none;
 }
 </style>

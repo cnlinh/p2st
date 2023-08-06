@@ -39,7 +39,8 @@ export default {
     },
     timestamp: {
       type: String,
-      required: true
+      default: "",
+      required: false,
     }
   }
 };

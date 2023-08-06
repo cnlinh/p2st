@@ -10,8 +10,8 @@ class AuthService {
         password: user.password
       })
       .then(response => {
-        if (response.data.token) {
-          sessionStorage.setItem('token', JSON.stringify(response.data.token));
+        if (response.data.access) {
+          sessionStorage.setItem('token', JSON.stringify(response.data.access));
           sessionStorage.setItem('email', user.username);
         }
 

@@ -8,12 +8,17 @@
             <div class="tab-pane card-chat-pane active" id="chat-0" role="tabpanel" aria-labelledby="chat-link-0">
               <div class="chat-content-body" style="display: inherit;">
                 <div class="chat-content-scroll-area scrollbar">
-                  <MessageBubble v-for="(message, index) in messages" :key="index" :isOwnMessage="message.isOwnMessage"
-                    :text="message.text" :timestamp="message.timestamp" />
+                  <MessageBubble v-for="message in messages" :key="message.id" :isOwnMessage="message.role === 'user'"
+                    :text="message.content" timestamp="" />
                 </div>
               </div>
             </div>
-            <form class="chat-editor-area">
+            <div class="card-body">
+              <a v-for="question in recommendedQuestions" :key="question"
+                class="badge border link-secondary me-1 text-decoration-none" @click="handleRecommendationClick(question)"
+                href="#!">{{ question }}</a>
+            </div>
+            <form class="chat-editor-area" @submit.prevent="handleSend">
               <div class="emojiarea-editor outline-none scrollbar" contenteditable="true"></div>
               <input class="d-none" type="file" id="chat-file-upload" />
               <button class="btn btn-sm btn-send shadow-none" type="submit">Send</button>
@@ -26,6 +31,8 @@
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex';
+import AdminService from "@/services/admin.service";
 import BaseLayout from "@/components/BaseLayout.vue";
 import MessageBubble from "@/components/MessageBubble.vue";
 
@@ -37,30 +44,68 @@ export default {
     MessageBubble,
   },
 
+  computed: {
+    ...mapState('admin', ['selectedTopic', 'messages']),
+  },
+
   data() {
     return {
-      messages: [
-        {
-          isOwnMessage: true,
-          text: 'Yes, in an organization stature, this is a must. Besides, we need to quickly establish all other professional appearances, e.g., having a website where members’ profile will be displayed along with additional organizational information. Providing services to existing members is more important than attracting new members at this moment, in my opinion..',
-          timestamp: '11:50 am'
-        },
-        {
-          isOwnMessage: false,
-          text: 'I\'m doing well, thanks! How about you?',
-          timestamp: '11:51 am'
-        },
-        {
-          isOwnMessage: true,
-          text: 'I\'m great! I\'ve been working on this cool project.',
-          timestamp: '11:52 am'
-        },
-        {
-          isOwnMessage: false,
-          text: 'That sounds interesting! Can you tell me more about it?',
-          timestamp: '11:54 am'
-        }
-      ]
+      recommendedQuestions: [],
+    };
+  },
+
+  watch: {
+    selectedTopic(newTopicId, oldTopicId) {
+      if (newTopicId !== oldTopicId) {
+        this.fetchMessages(newTopicId);
+        this.fetchRecommendedQuestions();
+      }
+    },
+    messages: {
+      handler() {
+        this.$forceUpdate();
+      },
+      deep: true
+    }
+  },
+
+  methods: {
+    ...mapActions('admin', ['fetchMessages']),
+
+    async handleSend() {
+      const messageContent = this.$el.querySelector(".emojiarea-editor").textContent;
+
+      if (!messageContent.trim()) {
+        return;
+      }
+
+      try {
+        this.$el.querySelector(".emojiarea-editor").textContent = '';
+        await AdminService.createMessageForConversation(this.selectedTopic, this.selectedTopic, messageContent);
+        await this.fetchMessages(this.selectedTopic);
+        await this.fetchRecommendedQuestions();
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    },
+
+    async fetchRecommendedQuestions() {
+      try {
+        this.recommendedQuestions = await AdminService.getRecommendedQuestionsForConversation(this.selectedTopic);
+      } catch (error) {
+        console.error('Error fetching recommended questions:', error);
+      }
+    },
+
+    handleRecommendationClick(question) {
+      this.$el.querySelector(".emojiarea-editor").textContent = question;
+    },
+  },
+
+  async created() {
+    if (this.selectedTopic) {
+      await this.fetchMessages(this.selectedTopic);
+      await this.fetchRecommendedQuestions();
     }
   },
 };
