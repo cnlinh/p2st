@@ -59,48 +59,6 @@ class ChatSerializer(serializers.Serializer):
     )  # gpt-3.5-turbo has max token limit of 4,096
 
 
-class AnswerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Answer
-        fields = "__all__"
-
-    def create(self, validated_data, **kwargs) -> Answer:
-        ans: Answer
-        try:
-            ans = Answer.objects.create(
-                question=validated_data["question"],
-                text=validated_data["text"],
-            )
-        except Exception as e:
-            raise exceptions.APIException(str(e))
-        ans.save()
-        return ans
-
-
-class MessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Message
-        fields = "__all__"
-
-    # validate text length
-
-    def create(self, validated_data, **kwargs) -> Message:
-        msg: Message
-        try:
-            msg = Message.objects.create(
-                user=validated_data["user"],
-                conversation=validated_data["conversation"],
-                parent_message=validated_data["parent_message"],
-                question=validated_data["question"],
-                answer=validated_data["answer"],
-                text=validated_data["text"],
-            )
-        except Exception as e:
-            raise exceptions.APIException(str(e))
-        msg.save()
-        return msg
-
-
 def generate_embedding(embedding_model, text: str) -> np.ndarray:
     embeddings = embedding_model([text])[0].numpy()
     return embeddings
@@ -202,9 +160,16 @@ def save_question(topic_id: int, text: str, embedding, created_by: Role) -> Ques
 
 
 def save_answer(question_id: int, response: str) -> Answer:
-    ans_serializer = AnswerSerializer(data={"question": question_id, "text": response})
-    ans_serializer.is_valid(raise_exception=True)
-    return ans_serializer.save()
+    ans: Answer
+    try:
+        ans = Answer.objects.create(
+            question_id=question_id,
+            text=response,
+        )
+    except Exception as e:
+        raise exceptions.APIException(str(e))
+    ans.save()
+    return ans
 
 
 def save_message(
@@ -215,18 +180,20 @@ def save_message(
     answer_id: Optional[int],
     text: str,
 ) -> Message:
-    msg_serializer = MessageSerializer(
-        data={
-            "user": user_id,
-            "conversation": conversation_id,
-            "parent_message": parent_message_id,
-            "question": question_id,
-            "answer": answer_id,
-            "text": text,
-        }
-    )
-    msg_serializer.is_valid(raise_exception=True)
-    return msg_serializer.save()
+    msg: Message
+    try:
+        msg = Message.objects.create(
+            user_id=user_id,
+            conversation_id=conversation_id,
+            parent_message_id=parent_message_id,
+            question_id=question_id,
+            answer_id=answer_id,
+            text=text,
+        )
+    except Exception as e:
+        raise exceptions.APIException(str(e))
+    msg.save()
+    return msg
 
 
 def check_conversation_permissions(user_id: int, conversation_id: int):
@@ -255,6 +222,8 @@ def is_generic_question(embedding: np.ndarray) -> bool:
         )
         if similarity > GENERIC_QUESTIONS_SIMILARITY_THRESHOLD:
             logger.info("found generic question with similarity {}".format(similarity))
+            # Should we add this question to ExcludeFromCache?
+            # in order to continuously improve the system
             return True
 
     return False
