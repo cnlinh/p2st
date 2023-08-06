@@ -84,6 +84,7 @@ class Rating(models.Model):
     class Meta:
         managed = False
         db_table = "ratings"
+        unique_together = (("message", "user"),)
 
 
 class ExcludeFromCache(models.Model):

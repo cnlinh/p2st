@@ -89,6 +89,7 @@ CREATE TABLE ratings (
   score INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
+  UNIQUE (message_id, user_id),
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (message_id) REFERENCES messages(id)
 );
