@@ -23,11 +23,5 @@ import "./assets/js/theme.js";
 
 export default {
   name: "App",
-
-  async created() {
-    if (this.status.loggedIn) {
-      //await this.initData();
-    }
-  },
 };
 </script>

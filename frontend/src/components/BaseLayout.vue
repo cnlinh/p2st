@@ -22,23 +22,21 @@
             </li>
             <div class="nav-link dropdown-indicator">
               <div class="d-flex align-items-center"><span class="nav-link-icon"><span
-                    class="fas fa-chart-pie"></span></span><span class="nav-link-text ps-1">Topics</span>
+                    class="fas fa-book"></span></span><span class="nav-link-text ps-1">Topics</span>
               </div>
             </div>
             <ul class="nav" id="topics">
               <li class="nav-item">
                 <router-link to="/home" class="nav-link">
                   <div class="d-flex align-items-center">
-                    <span class="nav-link-icon"><span class="fas fa-chart-line"></span></span><span
-                      class="nav-link-text ps-1">Topic 1</span>
+                    <span class="nav-link-icon"></span><span class="nav-link-text ps-1">Topic 1</span>
                   </div>
                 </router-link>
               </li>
               <li class="nav-item">
                 <router-link to="/home" class="nav-link">
                   <div class="d-flex align-items-center">
-                    <span class="nav-link-icon"><span class="fab fa-trello"></span></span><span
-                      class="nav-link-text ps-1">Topic 2</span>
+                    <span class="nav-link-icon"></span><span class="nav-link-text ps-1">Topic 2</span>
                   </div>
                 </router-link>
               </li>

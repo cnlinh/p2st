@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex p-3" :class="{ 'justify-content-end': isOwnMessage }">
     <div v-if="!isOwnMessage" class="avatar avatar-l me-2">
-      <img class="rounded-circle" :src="avatar" alt="" />
+      <img class="rounded-circle" src="../assets/img/team/2.jpg" alt="" />
     </div>
     <div class="flex-1">
       <div class="w-xxl-75">
@@ -32,10 +32,6 @@ export default {
     isOwnMessage: {
       type: Boolean,
       required: true
-    },
-    avatar: {
-      type: String,
-      default: ''
     },
     text: {
       type: String,

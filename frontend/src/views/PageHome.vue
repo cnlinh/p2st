@@ -9,7 +9,7 @@
               <div class="chat-content-body" style="display: inherit;">
                 <div class="chat-content-scroll-area scrollbar">
                   <MessageBubble v-for="(message, index) in messages" :key="index" :isOwnMessage="message.isOwnMessage"
-                    :avatar="message.avatar" :text="message.text" :timestamp="message.timestamp" />
+                    :text="message.text" :timestamp="message.timestamp" />
                 </div>
               </div>
             </div>
@@ -42,25 +42,21 @@ export default {
       messages: [
         {
           isOwnMessage: true,
-          avatar: '../assets/img/team/1.jpg',
           text: 'Yes, in an organization stature, this is a must. Besides, we need to quickly establish all other professional appearances, e.g., having a website where members’ profile will be displayed along with additional organizational information. Providing services to existing members is more important than attracting new members at this moment, in my opinion..',
           timestamp: '11:50 am'
         },
         {
           isOwnMessage: false,
-          avatar: '../assets/img/team/2.jpg',
           text: 'I\'m doing well, thanks! How about you?',
           timestamp: '11:51 am'
         },
         {
           isOwnMessage: true,
-          avatar: '../assets/img/team/1.jpg',
           text: 'I\'m great! I\'ve been working on this cool project.',
           timestamp: '11:52 am'
         },
         {
           isOwnMessage: false,
-          avatar: '../assets/img/team/2.jpg',
           text: 'That sounds interesting! Can you tell me more about it?',
           timestamp: '11:54 am'
         }

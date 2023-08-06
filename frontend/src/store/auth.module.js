@@ -1,12 +1,12 @@
 import AuthService from '../services/auth.service';
 
-const user = JSON.parse(sessionStorage.getItem('user'));
+const token = JSON.parse(sessionStorage.getItem('token'));
 
 const initialState = {
   status: {
-    loggedIn: user ? true : false,
+    loggedIn: token ? true : false,
   },
-  user: null,
+  token: null,
 };
 
 export const auth = {
@@ -14,16 +14,15 @@ export const auth = {
   state: initialState,
   actions: {
     async login({ commit }, user) {
-      return AuthService.login(user).then(
-        user => {
-          commit('loginSuccess', user);
-          return Promise.resolve(user);
-        },
-        error => {
-          commit('loginFailure');
-          return Promise.reject(error);
-        }
-      );
+      try {
+        const response = await AuthService.login(user);
+        commit('loginSuccess', response.token);
+        return Promise.resolve(response.data);
+      }
+      catch (error) {
+        commit('loginFailure');
+        return Promise.reject(error);
+      }
     },
 
     logout({ commit }) {
@@ -32,17 +31,17 @@ export const auth = {
     },
   },
   mutations: {
-    loginSuccess(state, user) {
+    loginSuccess(state, token) {
       state.status.loggedIn = true;
-      state.user = user;
+      state.token = token;
     },
     loginFailure(state) {
       state.status.loggedIn = false;
-      state.user = null;
+      state.token = null;
     },
     logout(state) {
       state.status.loggedIn = false;
-      state.user = null;
+      state.token = null;
     },
   }
 };
