@@ -52,28 +52,11 @@ class InitConversationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class QuestionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Question
-        fields = "__all__"
-        read_only_fields = ["embedding", "difficulty"]
-
-    # validate text length
-
-    def create(self, validated_data, **kwargs) -> Question:
-        qn: Question
-        try:
-            qn = Question.objects.create(
-                topic=None,  # TO-DO
-                text=validated_data["text"],
-                embedding=validated_data["embeddings"],
-                difficulty=0.5,  # TO-DO
-                created_by=validated_data["created_by"],
-            )
-        except Exception as e:
-            raise exceptions.APIException(str(e))
-        qn.save()
-        return qn
+class ChatSerializer(serializers.Serializer):
+    topic_id = serializers.IntegerField()
+    text = serializers.CharField(
+        max_length=3000
+    )  # gpt-3.5-turbo has max token limit of 4,096
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -202,10 +185,20 @@ def fetch_answer(question_id: int) -> Answer:
     return Answer.objects.get(question=question_id)
 
 
-def save_question(text: str, embeddings, created_by: Role) -> Question:
-    qn_serializer = QuestionSerializer(data={"text": text, "created_by": created_by})
-    qn_serializer.is_valid(raise_exception=True)
-    return qn_serializer.save(embeddings=embeddings)
+def save_question(topic_id: int, text: str, embedding, created_by: Role) -> Question:
+    qn: Question
+    try:
+        qn = Question.objects.create(
+            topic_id=topic_id,
+            text=text,
+            embedding=embedding,
+            difficulty=0.5,  # TO-DO
+            created_by=created_by,
+        )
+    except Exception as e:
+        raise exceptions.APIException(str(e))
+    qn.save()
+    return qn
 
 
 def save_answer(question_id: int, response: str) -> Answer:
@@ -272,10 +265,12 @@ class ConversationView(APIView):
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
     def post(self, request, id):
-        if "text" not in request.data:
-            raise exceptions.ValidationError("Missing 'text' field")
+        serializer = ChatSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        question_text = request.data["text"]
+        question_text = serializer.validated_data["text"]
+        topic_id = serializer.validated_data["topic_id"]
         try:
             check_conversation_permissions(request.user.id, id)
 
@@ -325,7 +320,9 @@ class ConversationView(APIView):
                     )
 
             logger.info("new question asked: {}".format(question_text))
-            question = save_question(question_text, embeddings.tolist(), Role.USER)
+            question = save_question(
+                topic_id, question_text, embeddings.tolist(), Role.USER
+            )
 
             question_message = save_message(
                 request.user.id,
