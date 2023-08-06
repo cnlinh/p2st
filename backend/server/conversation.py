@@ -130,10 +130,10 @@ def generate_answer(
         collected_chunks.append(chunk)  # save the event response
         chunk_message = chunk["choices"][0]["delta"]  # extract the message
         collected_messages.append(chunk_message)  # save the message
-        print(f"Message received: {chunk_message}")  # print the delay and text
+        # print(f"Message received: {chunk_message}")  # print the delay and text
 
     full_reply_content = "".join([m.get("content", "") for m in collected_messages])
-    print(f"Full conversation received: {full_reply_content}")
+    # print(f"Full conversation received: {full_reply_content}")
 
     # TO-DO: Stream out responses as well to the user
     return full_reply_content
@@ -233,7 +233,7 @@ class ConversationView(APIView):
     permission_classes = [IsAuthenticated]
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
-    def post(self, request, id):
+    def post(self, request, id) -> Response:
         serializer = ChatSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -263,9 +263,6 @@ class ConversationView(APIView):
                             most_similar_question.text,
                         )
                     )
-                    answer = fetch_answer(most_similar_question.id)
-                    response = answer.text
-
                     question_message = save_message(
                         request.user.id,
                         id,
@@ -274,6 +271,20 @@ class ConversationView(APIView):
                         None,
                         question_text,
                     )
+
+                    response: str
+                    try:
+                        answer = fetch_answer(most_similar_question.id)
+                        response = answer.text
+                    except Answer.DoesNotExist:
+                        # Must be a system-generated recommended question
+                        response = generate_answer(id, past_messages, question_text)
+                        logger.info(
+                            "generated answer for question {}: {}".format(
+                                most_similar_question.id, response
+                            )
+                        )
+                        answer = save_answer(most_similar_question.id, response)
 
                     ans_msg = save_message(
                         request.user.id,
