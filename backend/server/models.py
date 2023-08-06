@@ -32,7 +32,7 @@ class Role(StrEnum):
 
 class Question(models.Model):
     id = models.BigAutoField(primary_key=True)
-    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, blank=True, null=True)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
     text = models.TextField()
     embedding = VectorField(dimensions=512, blank=True, null=True)
     difficulty = models.FloatField()

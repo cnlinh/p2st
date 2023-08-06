@@ -44,7 +44,7 @@ CREATE TYPE ROLE AS ENUM ('user', 'system');
 
 CREATE TABLE questions (
   id BIGSERIAL PRIMARY KEY,
-  topic_id BIGINT,
+  topic_id BIGINT NOT NULL,
   text TEXT NOT NULL,
   embedding VECTOR(512),
   difficulty REAL NOT NULL,
