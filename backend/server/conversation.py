@@ -4,7 +4,7 @@ import numpy as np
 import logging
 from sklearn.metrics.pairwise import cosine_similarity
 import tensorflow_hub as hub
-from typing import List, TypedDict, Optional
+from typing import List, TypedDict, Optional, NotRequired
 from pgvector.django import CosineDistance
 
 from django.contrib.auth import login, password_validation
@@ -86,16 +86,16 @@ def find_similar_question(
 
 
 class ChatGPTMessage(TypedDict):
-    id: Optional[int]
+    id: NotRequired[int]
     role: str  # TO-DO: use Enum; user, system, assistant
     content: str
 
 
 # TO-DO: cache messages of a conversation so we don't repeatedly call the DB
-def get_conversation_messages(
-    conversations: QuerySet[Message], conversation_id: int
-) -> List[ChatGPTMessage]:
-    messages = conversations.filter(conversation=conversation_id).order_by("created_at")
+def get_conversation_messages(conversation_id: int) -> List[ChatGPTMessage]:
+    messages = Message.objects.filter(conversation=conversation_id).order_by(
+        "created_at"
+    )
     return list(
         map(
             lambda m: ChatGPTMessage(
@@ -112,7 +112,7 @@ def generate_answer(
     conversation_id: int, past_messages: List[ChatGPTMessage], question: str
 ):
     messages = past_messages.copy()
-    messages.append({"id": None, "role": "user", "content": question})
+    messages.append({"role": "user", "content": question})
     response = openai.ChatCompletion.create(
         model=MODEL,
         messages=list(
@@ -233,6 +233,26 @@ class ConversationView(APIView):
     permission_classes = [IsAuthenticated]
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
+    def get(self, request, id) -> Response:
+        try:
+            check_conversation_permissions(request.user.id, id)
+            messages = get_conversation_messages(id)
+            return Response(
+                {
+                    "messages": messages,
+                    "latest_message_id": messages[-1]["id"]
+                    if len(messages) > 0
+                    else None,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        except exceptions.PermissionDenied as e:
+            logger.error(e)
+            raise e
+        except Exception as e:
+            logger.error(e)
+            raise exceptions.APIException("Internal server error")
+
     def post(self, request, id) -> Response:
         serializer = ChatSerializer(data=request.data)
         if not serializer.is_valid():
@@ -243,7 +263,7 @@ class ConversationView(APIView):
         try:
             check_conversation_permissions(request.user.id, id)
 
-            past_messages = get_conversation_messages(Message.objects.all(), id)
+            past_messages = get_conversation_messages(id)
             # logger.debug("messages in conversation {}: {}".format(id, past_messages))
 
             parent_message = past_messages[-1]["id"] if len(past_messages) > 0 else None
@@ -325,7 +345,7 @@ class ConversationView(APIView):
             )
 
             return Response(
-                {"data": response, "latest_message_id": ans_msg.id},
+                {"answer": response, "latest_message_id": ans_msg.id},
                 status=status.HTTP_201_CREATED,
             )
         except (exceptions.ValidationError, exceptions.PermissionDenied) as e:
