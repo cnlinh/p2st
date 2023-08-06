@@ -73,15 +73,17 @@
             </div>
             <form>
               <div class="row gx-2">
-                <div class="mb-3 col-sm-6">
-                  <label class="form-label required" for="name">First Name</label>
-                  <input v-model="name" class="form-control" type="text" id="name" placeholder="Your first name"
+                <div class="mb-3">
+                  <label class="form-label required" for="name">Name</label>
+                  <input v-model="name" class="form-control" type="text" id="name" placeholder="Enter name"
                     @input="clearError('name')" />
                   <span class="text-danger">{{ validationErrors.name }}</span>
                 </div>
-                <div class="mb-3 col-sm-6">
-                  <label class="form-label" for="surname">Last Name</label>
-                  <input v-model="surname" class="form-control" type="text" id="surname" placeholder="Your last name" />
+                <div class="mb-3">
+                  <label class="form-label required" for="name">Student ID</label>
+                  <input v-model="studentId" class="form-control" type="text" id="name" placeholder="Enter student id"
+                    @input="clearError('name')" />
+                  <span class="text-danger">{{ validationErrors.studentId }}</span>
                 </div>
               </div>
               <div class="mb-3">
@@ -104,14 +106,6 @@
                   <span class="text-danger">{{ validationErrors.confirmPassword }}</span>
                 </div>
               </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="cover-register-checkbox" v-model="isTOSAccepted"
-                  @input="clearError('isTOSAccepted')" />
-                <label class="form-label" for="cover-register-checkbox">I agree to the <a href="#!">Terms of Service
-                  </a>and
-                  <a href="#!">Privacy Policy</a></label>
-                <div class="text-danger">{{ validationErrors.isTOSAccepted }}</div>
-              </div>
               <div class="mb-3">
                 <button type="button" class="btn btn-primary d-block w-100 mt-3" @click="submitUserDetails">
                   Create account
@@ -132,7 +126,7 @@
 </template>
 
 <script>
-import PublicService from '../services/public.service';
+import AuthService from '../services/auth.service';
 
 export default {
   name: "PageRegister",
@@ -141,11 +135,10 @@ export default {
     return {
       validationErrors: {},
       name: "",
-      surname: "",
+      studentId: "",
       email: "",
       password: "",
       confirmPassword: "",
-      isTOSAccepted: false,
     }
   },
 
@@ -163,6 +156,10 @@ export default {
         this.validationErrors.name = "Name is required";
       }
 
+      if (!this.studentId) {
+        this.validationErrors.name = "Student ID is required";
+      }
+
       if (!this.email) {
         this.validationErrors.email = "Email address is required";
       }
@@ -177,10 +174,6 @@ export default {
         this.validationErrors.confirmPassword = "Passwords do not match";
       }
 
-      if (!this.isTOSAccepted) {
-        this.validationErrors.isTOSAccepted = "Please accept the Terms of Service and Privacy Policy";
-      }
-
       return Object.keys(this.validationErrors).length === 0;
     },
 
@@ -193,8 +186,8 @@ export default {
       if (this.name) {
         userDetails.name = this.name;
       }
-      if (this.surname) {
-        userDetails.surname = this.surname;
+      if (this.studentId) {
+        userDetails.studentId = this.studentId;
       }
       if (this.email) {
         userDetails.email = this.email;
@@ -204,13 +197,10 @@ export default {
       }
 
       try {
-        await PublicService.registerUser(userDetails);
+        await AuthService.register(userDetails);
         this.validationErrors = {};
         this.$router.push({
-          name: 'EmailVerification',
-          query: {
-            email: this.email,
-          },
+          name: 'PageLogin',
         });
       } catch (error) {
         console.log(error);

@@ -9,7 +9,7 @@ import PageRegister from "../views/PageRegister.vue"
 const routes = [
   {
     path: "/",
-    name: "home",
+    name: "PageHome",
     component: PageHome,
     //meta: { requiresAuth: true },
   },
@@ -20,6 +20,7 @@ const routes = [
   },
   {
     path: "/login",
+    name: "PageLogin",
     component: PageLogin,
   },
   {
