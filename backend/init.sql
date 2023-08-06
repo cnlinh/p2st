@@ -1,3 +1,5 @@
+CREATE EXTENSION vector; -- pgvector
+
 DROP TABLE IF EXISTS recommendations;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS answers;
@@ -38,12 +40,16 @@ CREATE TABLE conversations (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+CREATE TYPE ROLE AS ENUM ('user', 'system');
+
 CREATE TABLE questions (
   id BIGSERIAL PRIMARY KEY,
-  topic_id BIGINT,
+  topic_id BIGINT NOT NULL,
   text TEXT NOT NULL,
-  embedding DOUBLE PRECISION[],
+  embedding VECTOR(512),
   difficulty REAL NOT NULL,
+  created_by ROLE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
  
   FOREIGN KEY (topic_id) REFERENCES topics(id)
 );
@@ -52,8 +58,6 @@ CREATE TABLE answers (
   id BIGSERIAL PRIMARY KEY,
   question_id BIGINT NOT NULL,
   text TEXT NOT NULL,
-  quality INT, -- rating from user, scale of 1-5
-  relevance INT, -- rating from user, scale of 1-5
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (question_id) REFERENCES questions(id)
@@ -78,16 +82,21 @@ CREATE TABLE messages (
   CHECK (question_id IS NOT NULL OR answer_id IS NOT NULL)
 );
 
-CREATE TABLE recommendations (
+CREATE TABLE ratings (
   id BIGSERIAL PRIMARY KEY,
   message_id BIGINT NOT NULL,
   user_id BIGINT NOT NULL,
-  hit BOOLEAN, -- whether the user actually asked our recommended qn
-  quality INT, -- rating from user, scale of 1-5
-  relevance INT, -- rating from user, scale of 1-5
+  score INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (message_id) REFERENCES messages(id)
 );
+
+CREATE TABLE exclude_from_cache (
+  id BIGSERIAL PRIMARY KEY,
+  text TEXT NOT NULL,
+  embedding VECTOR(512),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
 

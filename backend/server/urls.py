@@ -25,4 +25,9 @@ urlpatterns = [
         recommendation.PopulateTopicView.as_view(),
         name="populate_topic",
     ),
+    path(
+        "recommendation/<int:id>",
+        recommendation.QuestionsRecommendationView.as_view(),
+        name="recommend_questions",
+    ),
 ]
