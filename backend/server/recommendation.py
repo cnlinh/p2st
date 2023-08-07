@@ -98,7 +98,16 @@ class QuestionsRecommendationView(APIView):
                 )
             )
         )
-        qn = parent_messages[-2]
+        qn: Message
+        for i in range(len(parent_messages) - 1, -1, -1):
+            msg = parent_messages[i]
+            if msg.question is not None:
+                qn = msg
+                break
+        logger.debug(f"parent question: {qn}")
+        if qn is None:
+            logger.error("parent question not found")
+            raise exceptions.APIException("Internal server error")
         for question in response:
             embeddings = generate_embedding(self.embedding_model, question)
             conversation.save_question(
