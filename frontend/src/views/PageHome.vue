@@ -94,12 +94,13 @@ export default {
     },
 
     async fetchRecommendedQuestions() {
-      if (!this.selectedTopic) {
+      if (!this.messages || !this.messages.length) {
         return;
       }
 
       try {
-        this.recommendedQuestions = await AdminService.getRecommendedQuestionsForConversation(this.selectedTopic);
+        const lastMessageId = this.messages[this.messages.length - 1].id;
+        this.recommendedQuestions = await AdminService.getRecommendedQuestionsForConversation(lastMessageId);
       } catch (error) {
         console.error('Error fetching recommended questions:', error);
       }
