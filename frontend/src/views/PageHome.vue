@@ -73,15 +73,19 @@ export default {
     ...mapActions('admin', ['fetchMessages']),
 
     async handleSend() {
-      const messageContent = this.$el.querySelector(".emojiarea-editor").textContent;
-
-      if (!messageContent.trim()) {
+      const editor = this.$el.querySelector(".emojiarea-editor");
+      if (!editor || !editor.textContent.trim()) {
         return;
       }
 
       try {
-        this.$el.querySelector(".emojiarea-editor").textContent = '';
-        await AdminService.createMessageForConversation(this.selectedTopic, this.selectedTopic, messageContent);
+        if (!this.messages) {
+          await AdminService.initConversation(this.selectedTopic, editor.textContent);
+        }
+        else {
+          await AdminService.createMessageForConversation(this.selectedTopic, this.selectedTopic, editor.textContent);
+        }
+        editor.textContent = '';
         await this.fetchMessages(this.selectedTopic);
         await this.fetchRecommendedQuestions();
       } catch (error) {
@@ -90,6 +94,10 @@ export default {
     },
 
     async fetchRecommendedQuestions() {
+      if (!this.selectedTopic) {
+        return;
+      }
+
       try {
         this.recommendedQuestions = await AdminService.getRecommendedQuestionsForConversation(this.selectedTopic);
       } catch (error) {
@@ -98,7 +106,10 @@ export default {
     },
 
     handleRecommendationClick(question) {
-      this.$el.querySelector(".emojiarea-editor").textContent = question;
+      const editor = this.$el.querySelector(".emojiarea-editor");
+      if (editor) {
+        editor.textContent = question;
+      }
     },
   },
 
