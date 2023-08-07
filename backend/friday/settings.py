@@ -157,7 +157,7 @@ LOGGING = {
     },
     "formatters": {
         "verbose": {
-            "format": "{levelname} {name} {asctime} {message}",
+            "format": "{levelname} {name}:{lineno} {asctime} {message}",
             "style": "{",
         },
         "simple": {

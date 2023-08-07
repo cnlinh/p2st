@@ -4,7 +4,8 @@ import numpy as np
 import logging
 from sklearn.metrics.pairwise import cosine_similarity
 import tensorflow_hub as hub
-from typing import List, TypedDict, Optional
+from typing import List, TypedDict, Optional, NotRequired
+from pgvector.django import CosineDistance
 
 from django.contrib.auth import login, password_validation
 from django.db.models import QuerySet
@@ -13,7 +14,7 @@ from rest_framework import exceptions, status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Answer, Conversation, Message, Question
+from .models import Answer, Conversation, Message, Question, Role, ExcludeFromCache
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ openai.organization = os.getenv("OPENAI_ORG_ID")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 MODEL = "gpt-3.5-turbo"
 SIMILARITY_THRESHOLD = 0.775
+GENERIC_QUESTIONS_SIMILARITY_THRESHOLD = 0.4
 
 
 class ConversationSerializer(serializers.ModelSerializer):
@@ -50,69 +52,11 @@ class InitConversationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class QuestionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Question
-        fields = "__all__"
-        read_only_fields = ["embedding", "difficulty"]
-
-    # validate text length
-
-    def create(self, validated_data, **kwargs) -> Question:
-        qn: Question
-        try:
-            qn = Question.objects.create(
-                topic=None,  # TO-DO
-                text=validated_data["text"],
-                embedding=validated_data["embeddings"],  # TO-DO
-                difficulty=0.5,  # TO-DO
-            )
-        except Exception as e:
-            raise exceptions.APIException(str(e))
-        qn.save()
-        return qn
-
-
-class AnswerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Answer
-        fields = "__all__"
-
-    def create(self, validated_data, **kwargs) -> Answer:
-        ans: Answer
-        try:
-            ans = Answer.objects.create(
-                question=validated_data["question"],
-                text=validated_data["text"],
-            )
-        except Exception as e:
-            raise exceptions.APIException(str(e))
-        ans.save()
-        return ans
-
-
-class MessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Message
-        fields = "__all__"
-
-    # validate text length
-
-    def create(self, validated_data, **kwargs) -> Message:
-        msg: Message
-        try:
-            msg = Message.objects.create(
-                user=validated_data["user"],
-                conversation=validated_data["conversation"],
-                parent_message=validated_data["parent_message"],
-                question=validated_data["question"],
-                answer=validated_data["answer"],
-                text=validated_data["text"],
-            )
-        except Exception as e:
-            raise exceptions.APIException(str(e))
-        msg.save()
-        return msg
+class ChatSerializer(serializers.Serializer):
+    topic_id = serializers.IntegerField()
+    text = serializers.CharField(
+        max_length=3000
+    )  # gpt-3.5-turbo has max token limit of 4,096
 
 
 def generate_embedding(embedding_model, text: str) -> np.ndarray:
@@ -120,35 +64,38 @@ def generate_embedding(embedding_model, text: str) -> np.ndarray:
     return embeddings
 
 
-# TO-DO: Use vector search (nearest neighbor)
-def find_similar_question(embeddings: np.ndarray, questions) -> Optional[Question]:
-    most_similar_question = None
-    max_similarity = 0
+def find_similar_question(
+    embeddings: np.ndarray, questions: QuerySet[Question]
+) -> Optional[Question]:
+    most_similar_question = (
+        questions.annotate(distance=CosineDistance("embedding", embeddings))
+        .order_by("distance")
+        .first()
+    )
 
-    for question in questions:
-        # TO-DO: store embeddings as np array in DB?
-        similarity = cosine_similarity([embeddings], [np.array(question.embedding)])[0][
-            0
-        ]
-        logger.debug("similarity to '{}': {}".format(question.text, similarity))
-        if similarity > SIMILARITY_THRESHOLD and similarity > max_similarity:
-            max_similarity = similarity
-            most_similar_question = question
+    if most_similar_question is not None:
+        similarity = 1 - most_similar_question.distance
+        if similarity > SIMILARITY_THRESHOLD:
+            logger.info(
+                "found most similar question with similarity {}".format(similarity)
+            )
+            return most_similar_question
+        return None
 
-    return most_similar_question
+    return None
 
 
 class ChatGPTMessage(TypedDict):
-    id: Optional[int]
+    id: NotRequired[int]
     role: str  # TO-DO: use Enum; user, system, assistant
     content: str
 
 
 # TO-DO: cache messages of a conversation so we don't repeatedly call the DB
-def get_conversation_messages(
-    conversations: QuerySet[Message], conversation_id: int
-) -> List[ChatGPTMessage]:
-    messages = conversations.filter(conversation=conversation_id).order_by("created_at")
+def get_conversation_messages(conversation_id: int) -> List[ChatGPTMessage]:
+    messages = Message.objects.filter(conversation=conversation_id).order_by(
+        "created_at"
+    )
     return list(
         map(
             lambda m: ChatGPTMessage(
@@ -165,7 +112,7 @@ def generate_answer(
     conversation_id: int, past_messages: List[ChatGPTMessage], question: str
 ):
     messages = past_messages.copy()
-    messages.append({"id": None, "role": "user", "content": question})
+    messages.append({"role": "user", "content": question})
     response = openai.ChatCompletion.create(
         model=MODEL,
         messages=list(
@@ -183,10 +130,10 @@ def generate_answer(
         collected_chunks.append(chunk)  # save the event response
         chunk_message = chunk["choices"][0]["delta"]  # extract the message
         collected_messages.append(chunk_message)  # save the message
-        print(f"Message received: {chunk_message}")  # print the delay and text
+        # print(f"Message received: {chunk_message}")  # print the delay and text
 
     full_reply_content = "".join([m.get("content", "") for m in collected_messages])
-    print(f"Full conversation received: {full_reply_content}")
+    # print(f"Full conversation received: {full_reply_content}")
 
     # TO-DO: Stream out responses as well to the user
     return full_reply_content
@@ -196,16 +143,33 @@ def fetch_answer(question_id: int) -> Answer:
     return Answer.objects.get(question=question_id)
 
 
-def save_question(text: str, embeddings) -> Question:
-    qn_serializer = QuestionSerializer(data={"text": text})
-    qn_serializer.is_valid(raise_exception=True)
-    return qn_serializer.save(embeddings=embeddings)
+def save_question(topic_id: int, text: str, embedding, created_by: Role) -> Question:
+    qn: Question
+    try:
+        qn = Question.objects.create(
+            topic_id=topic_id,
+            text=text,
+            embedding=embedding,
+            difficulty=0.5,  # TO-DO
+            created_by=created_by,
+        )
+    except Exception as e:
+        raise exceptions.APIException(str(e))
+    qn.save()
+    return qn
 
 
 def save_answer(question_id: int, response: str) -> Answer:
-    ans_serializer = AnswerSerializer(data={"question": question_id, "text": response})
-    ans_serializer.is_valid(raise_exception=True)
-    return ans_serializer.save()
+    ans: Answer
+    try:
+        ans = Answer.objects.create(
+            question_id=question_id,
+            text=response,
+        )
+    except Exception as e:
+        raise exceptions.APIException(str(e))
+    ans.save()
+    return ans
 
 
 def save_message(
@@ -216,18 +180,20 @@ def save_message(
     answer_id: Optional[int],
     text: str,
 ) -> Message:
-    msg_serializer = MessageSerializer(
-        data={
-            "user": user_id,
-            "conversation": conversation_id,
-            "parent_message": parent_message_id,
-            "question": question_id,
-            "answer": answer_id,
-            "text": text,
-        }
-    )
-    msg_serializer.is_valid(raise_exception=True)
-    return msg_serializer.save()
+    msg: Message
+    try:
+        msg = Message.objects.create(
+            user_id=user_id,
+            conversation_id=conversation_id,
+            parent_message_id=parent_message_id,
+            question_id=question_id,
+            answer_id=answer_id,
+            text=text,
+        )
+    except Exception as e:
+        raise exceptions.APIException(str(e))
+    msg.save()
+    return msg
 
 
 def check_conversation_permissions(user_id: int, conversation_id: int):
@@ -238,61 +204,125 @@ def check_conversation_permissions(user_id: int, conversation_id: int):
         )
 
 
+def is_generic_question(embedding: np.ndarray) -> bool:
+    most_similar_question = (
+        ExcludeFromCache.objects.annotate(
+            distance=CosineDistance("embedding", embedding)
+        )
+        .order_by("distance")
+        .first()
+    )
+
+    if most_similar_question is not None:
+        similarity = 1 - most_similar_question.distance
+        logger.debug(
+            "most similar generic question: {}; {}".format(
+                most_similar_question.text, similarity
+            )
+        )
+        if similarity > GENERIC_QUESTIONS_SIMILARITY_THRESHOLD:
+            logger.info("found generic question with similarity {}".format(similarity))
+            # Should we add this question to ExcludeFromCache?
+            # in order to continuously improve the system
+            return True
+
+    return False
+
+
 class ConversationView(APIView):
     permission_classes = [IsAuthenticated]
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
-    def post(self, request, id):
-        if "text" not in request.data:
-            raise exceptions.ValidationError("Missing 'text' field")
+    def get(self, request, id) -> Response:
+        try:
+            check_conversation_permissions(request.user.id, id)
+            messages = get_conversation_messages(id)
+            return Response(
+                {
+                    "messages": messages,
+                    "latest_message_id": messages[-1]["id"]
+                    if len(messages) > 0
+                    else None,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        except exceptions.PermissionDenied as e:
+            logger.error(e)
+            raise e
+        except Exception as e:
+            logger.error(e)
+            raise exceptions.APIException("Internal server error")
 
-        question_text = request.data["text"]
+    def post(self, request, id) -> Response:
+        serializer = ChatSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        question_text = serializer.validated_data["text"]
+        topic_id = serializer.validated_data["topic_id"]
         try:
             check_conversation_permissions(request.user.id, id)
 
-            past_messages = get_conversation_messages(Message.objects.all(), id)
-            logger.debug("messages in conversation {}: {}".format(id, past_messages))
+            past_messages = get_conversation_messages(id)
+            # logger.debug("messages in conversation {}: {}".format(id, past_messages))
 
             parent_message = past_messages[-1]["id"] if len(past_messages) > 0 else None
 
             embeddings = generate_embedding(self.embedding_model, question_text)
 
-            logger.debug("finding similar questions to '{}'".format(question_text))
-            most_similar_question = find_similar_question(
-                embeddings, questions=Question.objects.all()
-            )
-            if most_similar_question is not None:
-                logger.info(
-                    "found a similar question to '{}': question {}; '{}'".format(
-                        question_text,
-                        most_similar_question.id,
-                        most_similar_question.text,
+            if not is_generic_question(embeddings):
+                logger.debug("finding similar questions to '{}'".format(question_text))
+                most_similar_question = find_similar_question(
+                    embeddings, questions=Question.objects.all()
+                )
+                if most_similar_question is not None:
+                    logger.info(
+                        "found a similar question to '{}': question {}; '{}'".format(
+                            question_text,
+                            most_similar_question.id,
+                            most_similar_question.text,
+                        )
                     )
-                )
-                answer = fetch_answer(most_similar_question.id)
-                response = answer.text
+                    question_message = save_message(
+                        request.user.id,
+                        id,
+                        parent_message,
+                        most_similar_question.id,
+                        None,
+                        question_text,
+                    )
 
-                question_message = save_message(
-                    request.user.id,
-                    id,
-                    parent_message,
-                    most_similar_question.id,
-                    None,
-                    question_text,
-                )
+                    response: str
+                    try:
+                        answer = fetch_answer(most_similar_question.id)
+                        response = answer.text
+                    except Answer.DoesNotExist:
+                        # Must be a system-generated recommended question
+                        response = generate_answer(id, past_messages, question_text)
+                        logger.info(
+                            "generated answer for question {}: {}".format(
+                                most_similar_question.id, response
+                            )
+                        )
+                        answer = save_answer(most_similar_question.id, response)
 
-                ans_msg = save_message(
-                    request.user.id,
-                    id,
-                    question_message.id,
-                    None,
-                    answer.id,
-                    response,
-                )
-                return Response({"data": response}, status=status.HTTP_201_CREATED)
+                    ans_msg = save_message(
+                        request.user.id,
+                        id,
+                        question_message.id,
+                        None,
+                        answer.id,
+                        response,
+                    )
+                    return Response(
+                        {"data": response, "latest_message_id": ans_msg.id},
+                        status=status.HTTP_201_CREATED,
+                    )
 
             logger.info("new question asked: {}".format(question_text))
-            question = save_question(question_text, embeddings.tolist())
+            question = save_question(
+                topic_id, question_text, embeddings.tolist(), Role.USER
+            )
 
             question_message = save_message(
                 request.user.id,
@@ -310,11 +340,14 @@ class ConversationView(APIView):
             )
 
             answer = save_answer(question.id, response)
-            save_message(
+            ans_msg = save_message(
                 request.user.id, id, question_message.id, None, answer.id, response
             )
 
-            return Response({"data": response}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"answer": response, "latest_message_id": ans_msg.id},
+                status=status.HTTP_201_CREATED,
+            )
         except (exceptions.ValidationError, exceptions.PermissionDenied) as e:
             logger.error(e)
             raise e

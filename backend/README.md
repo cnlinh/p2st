@@ -78,9 +78,29 @@ To completely erase the database data, `docker volume rm backend_pgdata`.
 
 If for any reason you need to "delete" a migration record, delete it from the `django_migrations` table.
 
+### pgvector
+
+We use pgvector's Docker image for our postgresql deployment:
+https://github.com/pgvector/pgvector#docker
+
+https://github.com/pgvector/pgvector#indexing
+By default, pgvector performs exact nearest neighbor search, which provides perfect recall.
+
+We can add an index to use approximate nearest neighbor search, which trades some recall for performance. Unlike typical indexes, we will see different results for queries after adding an approximate index.
+
+Note: Let's only add an index when the query latency starts to degrade.
+
 ### Django REST Framework
 
 - Serializers provide serialization and deserialization, allowing parsed data to be converted back into complex types
 - When deserializing data, you always need to call `is_valid()` before attempting to access the validated data, or save an object instance
 - Calling `.save()` on a serializer will either create a new instance, or update an existing instance
 -
+
+## Deployment
+
+### Startup Scripts
+
+```
+python manage.py populate_db
+```
