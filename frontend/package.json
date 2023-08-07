@@ -1,0 +1,63 @@
+{
+  "name": "CS3243",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@babel/preset-typescript": "^7.21.0",
+    "@fortawesome/fontawesome-svg-core": "^6.3.0",
+    "@fortawesome/free-solid-svg-icons": "^6.3.0",
+    "@fortawesome/vue-fontawesome": "^3.0.3",
+    "@popperjs/core": "^2.11.6",
+    "@vue/cli-plugin-eslint": "^5.0.8",
+    "@vue/compiler-sfc": "^3.2.47",
+    "anchor-js": "^5.0.0",
+    "axios": "^1.3.3",
+    "babel-eslint": "^10.1.0",
+    "babel-preset-typescript-vue3": "^2.0.17",
+    "bootstrap": "^5.2.3",
+    "core-js": "^3.8.3",
+    "jquery": "^3.6.3",
+    "simplebar": "^6.2.1",
+    "typescript": "^5.0.2",
+    "vue": "^3.2.13",
+    "vue-eslint-parser": "^9.1.0",
+    "vue-jwt-decode": "^0.1.0",
+    "vue-multiselect": "^3.0.0-beta.1",
+    "vue-router": "^4.1.6",
+    "vuex": "^4.1.0",
+    "yup": "^1.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-vue": "^8.0.3"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "@babel/eslint-parser"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}

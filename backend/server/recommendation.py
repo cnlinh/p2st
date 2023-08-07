@@ -98,6 +98,7 @@ class QuestionsRecommendationView(APIView):
                 )
             )
         )
+
         qn: Message
         for i in range(len(parent_messages) - 1, -1, -1):
             msg = parent_messages[i]
@@ -115,6 +116,7 @@ class QuestionsRecommendationView(APIView):
             )
         # TO-DO: Incorporate existing questions to recommend questions
         find_similar_questions(qn.question.topic_id, qn.question.embedding)
+
         return Response({"data": response}, status=status.HTTP_201_CREATED)
 
 
@@ -184,3 +186,14 @@ def generate_follow_up_questions(past_messages):
         re.sub("^\d+\.\s", "", question) for question in question_list if question
     ]
     return processed_questions_list
+
+class TopicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Topic
+        fields = ['id', 'name', 'created_at']
+
+class TopicView(APIView):
+    def get(self, request):
+        topics = Topic.objects.all()
+        serializer = TopicSerializer(topics, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
