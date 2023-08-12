@@ -57,9 +57,26 @@ class ConversationsView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-        conversations = Conversation.objects.filter(user=request.user.id)
-        serializer = ConversationSerializer(conversations, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        topic_id = request.query_params.get("topic")
+        try:
+            conversations = Conversation.objects.filter(user=request.user.id)
+            if topic_id:
+                conversation = conversations.filter(topic_id=topic_id).first()
+                if conversation is None:
+                    return Response(
+                        {"error": "Conversation not found."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                serializer = ConversationSerializer(conversation, many=False)
+            else:
+                serializer = ConversationSerializer(conversations, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(e)
+            return Response(
+                {"error": "Internal server error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ChatSerializer(serializers.Serializer):
