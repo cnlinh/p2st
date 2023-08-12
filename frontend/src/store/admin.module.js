@@ -3,6 +3,7 @@ import AdminService from '../services/admin.service';
 const initialState = {
   topics: [],
   selectedTopic: null,
+  selectedConversation: null,
   messages: [],
 }
 
@@ -23,18 +24,34 @@ export const admin = {
       }
     },
 
-    async fetchMessages({ commit }, topicId) {
+    async fetchMessages({ commit }, conversationId) {
       try {
-        const messages = await AdminService.getMessagesFromConversation(topicId);
+        const messages = await AdminService.getMessagesFromConversation(
+          conversationId
+        )
         commit('SET_MESSAGES', messages);
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
     },
 
-    selectTopic({ commit, dispatch }, topicId) {
+    async fetchConversation({ commit }, topicId) {
+      try {
+        const conversation = await AdminService.getConversationByTopic(topicId);
+        commit('SET_SELECTED_CONVERSATION', conversation.id);
+      } catch (error) {
+        if (error.response?.status === 404) {
+          const conversation = await AdminService.initConversation(topicId);
+          console.log(conversation)
+          commit('SET_SELECTED_CONVERSATION', conversation.id);
+        }
+
+        console.error('Error fetching conversation:', error);
+      }
+    },
+
+    selectTopic({ commit }, topicId) {
       commit('SET_SELECTED_TOPIC', topicId);
-      dispatch('fetchMessages', topicId);
     },
   },
   mutations: {
@@ -46,6 +63,9 @@ export const admin = {
     },
     SET_MESSAGES(state, messages) {
       state.messages = messages;
+    },
+    SET_SELECTED_CONVERSATION(state, conversationId) {
+      state.selectedConversation = conversationId;
     }
   },
 };
