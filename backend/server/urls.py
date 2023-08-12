@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from . import signup, conversation, recommendation, ratings
+from . import signup, conversation, recommendation, ratings, modules
 
 urlpatterns = [
     path("login", TokenObtainPairView.as_view(), name="login"),
@@ -17,15 +17,15 @@ urlpatterns = [
     ),
     path(
         "conversations",
-        conversation.InitConversationView.as_view(),
-        name="new_conversation",
+        conversation.ConversationsView.as_view(),
+        name="conversations",
     ),
     path(
         "topics/populate/<int:id>",
         recommendation.PopulateTopicView.as_view(),
         name="populate_topic",
     ),
-    path("topics/all", recommendation.TopicView.as_view(), name="list_topic"),
+    path("topics", modules.TopicView.as_view(), name="topics"),
     path(
         "recommendations/<int:id>",
         recommendation.QuestionsRecommendationView.as_view(),
