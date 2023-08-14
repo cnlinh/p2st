@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from server.models import ExcludeFromCache
+from server.models import ExcludeFromCache, Module, Topic
 import server.conversation as conversation
 import tensorflow_hub as hub
 
@@ -51,15 +51,45 @@ GENERIC_QUESTIONS = [
     "Can you provide an example?",
 ]
 
+MODULES = [
+    {
+        "code": "CS3243",
+        "name": "Introduction to Artificial Intelligence",
+        "topics": [
+            "Intro to AI/Agents",
+            "Problem-solving via Search",
+            "Adversarial Search",
+            "Constraint Satisfaction Problems",
+            "Logical Agents",
+            "Uncertainty and Bayesian Belief Networks",
+        ],
+    }
+]
+
 
 class Command(BaseCommand):
-    help = "Closes the specified poll for voting"
+    help = "Populates the database"
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
     def handle(self, *args, **options):
+        self.insert_generic_questions()
+        self.insert_modules_and_topics()
+
+    def insert_generic_questions(self):
         for question in GENERIC_QUESTIONS:
             embedding = conversation.generate_embedding(self.embedding_model, question)
             ExcludeFromCache.objects.create(text=question, embedding=embedding)
         self.stdout.write(
             self.style.SUCCESS("Successfully populated db with generic questions")
         )
+
+    def insert_modules_and_topics(self):
+        for m in MODULES:
+            module = Module.objects.create(code=m["code"], name=m["name"])
+            for topic in m["topics"]:
+                Topic.objects.create(name=topic, module=module)
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Successfully populated db with module {}".format(m["code"])
+                )
+            )

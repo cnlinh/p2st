@@ -24,6 +24,7 @@
     "jquery": "^3.6.3",
     "simplebar": "^6.2.1",
     "typescript": "^5.0.2",
+    "vee-validate": "^4.11.1",
     "vue": "^3.2.13",
     "vue-eslint-parser": "^9.1.0",
     "vue-jwt-decode": "^0.1.0",

@@ -29,31 +29,58 @@ GENERIC_QUESTIONS_SIMILARITY_THRESHOLD = 0.4
 class ConversationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Conversation
-        fields = ["id", "user"]
+        fields = [
+            "id",
+            "topic",
+        ]
 
     def create(self, validated_data, **kwargs) -> Conversation:
         convo: Conversation
         try:
-            convo = Conversation.objects.create(user=validated_data["user"])
+            convo = Conversation.objects.create(
+                user=validated_data["user"], topic=validated_data["topic"]
+            )
         except Exception as e:
             raise exceptions.APIException(str(e))
         convo.save()
         return convo
 
 
-class InitConversationView(APIView):
+class ConversationsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = ConversationSerializer(data={"user": request.user.id})
+        serializer = ConversationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def get(self, request):
+        topic_id = request.query_params.get("topic")
+        try:
+            conversations = Conversation.objects.filter(user=request.user.id)
+            if topic_id:
+                conversation = conversations.filter(topic_id=topic_id).first()
+                if conversation is None:
+                    return Response(
+                        {"error": "Conversation not found."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                serializer = ConversationSerializer(conversation, many=False)
+            else:
+                serializer = ConversationSerializer(conversations, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(e)
+            return Response(
+                {"error": "Internal server error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class ChatSerializer(serializers.Serializer):
-    topic_id = serializers.IntegerField()
+    topic = serializers.IntegerField()
     text = serializers.CharField(
         max_length=3000
     )  # gpt-3.5-turbo has max token limit of 4,096
@@ -259,7 +286,7 @@ class ConversationView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         question_text = serializer.validated_data["text"]
-        topic_id = serializer.validated_data["topic_id"]
+        topic_id = serializer.validated_data["topic"]
         try:
             check_conversation_permissions(request.user.id, id)
 

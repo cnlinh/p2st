@@ -45,7 +45,7 @@ export default {
   },
 
   computed: {
-    ...mapState('admin', ['selectedTopic', 'messages']),
+    ...mapState('admin', ['selectedTopic', 'messages', 'selectedConversation']),
   },
 
   data() {
@@ -57,7 +57,12 @@ export default {
   watch: {
     selectedTopic(newTopicId, oldTopicId) {
       if (newTopicId !== oldTopicId) {
-        this.fetchMessages(newTopicId);
+        this.fetchConversation(newTopicId);
+      }
+    },
+    selectedConversation(newConversationId, oldConversationId) {
+      if (newConversationId !== oldConversationId) {
+        this.fetchMessages(newConversationId);
         this.fetchRecommendedQuestions();
       }
     },
@@ -66,11 +71,11 @@ export default {
         this.$forceUpdate();
       },
       deep: true
-    }
+    },
   },
 
   methods: {
-    ...mapActions('admin', ['fetchMessages']),
+    ...mapActions('admin', ['fetchMessages', 'fetchConversation']),
 
     async handleSend() {
       const editor = this.$el.querySelector(".emojiarea-editor");
@@ -79,14 +84,9 @@ export default {
       }
 
       try {
-        if (!this.messages) {
-          await AdminService.initConversation(this.selectedTopic, editor.textContent);
-        }
-        else {
-          await AdminService.createMessageForConversation(this.selectedTopic, this.selectedTopic, editor.textContent);
-        }
+        await AdminService.createMessageForConversation(this.selectedConversation, this.selectedTopic, editor.textContent);
         editor.textContent = '';
-        await this.fetchMessages(this.selectedTopic);
+        await this.fetchMessages(this.selectedConversation);
         await this.fetchRecommendedQuestions();
       } catch (error) {
         console.error('Error sending message:', error);
@@ -115,8 +115,8 @@ export default {
   },
 
   async created() {
-    if (this.selectedTopic) {
-      await this.fetchMessages(this.selectedTopic);
+    if (this.selectedConversation) {
+      await this.fetchMessages(this.selectedConversation);
       await this.fetchRecommendedQuestions();
     }
   },
