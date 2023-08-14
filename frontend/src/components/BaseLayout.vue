@@ -53,24 +53,16 @@
           <div class="d-flex align-items-center"><span class="font-sans-serif text-black">CS3243</span>
           </div>
         </a>
-        <ul class="navbar-nav align-items-center d-none d-lg-block">
-          <li class="nav-item">
-            <div class="search-box" data-list='{"valueNames":["title"]}'>
-              <form class="position-relative" data-bs-toggle="search" data-bs-display="static">
-                <input class="form-control search-input fuzzy-search" type="search" placeholder="Search..."
-                  aria-label="Search" />
-                <span class="fas fa-search search-box-icon"></span>
-              </form>
-            </div>
-          </li>
-        </ul>
         <ul class="navbar-nav navbar-nav-icons ms-auto flex-row align-items-center">
-          <li class="nav-item dropdown">
-            <!-- notification -->
-            <a class="nav-link notification-indicator notification-indicator-primary px-0 fa-icon-wait"
-              id="navbarDropdownNotification" role="button" data-bs-toggle="dropdown" aria-haspopup="true"
-              aria-expanded="false" data-hide-on-body-scroll="data-hide-on-body-scroll"><span class="fas fa-bell"
-                data-fa-transform="shrink-6" style="font-size: 33px"></span></a>
+          <li class="nav-item">
+            <!-- email display -->
+            <div class="nav-link d-flex align-items-center">
+              <div class="email-icon d-flex align-items-center justify-content-center"
+                style="background-color: black; width: 35px; height: 35px; border-radius: 5px;">
+                <span class="text-white">{{ emailInitial }}</span>
+              </div>
+              <span>{{ email }}</span>
+            </div>
           </li>
         </ul>
       </nav>
@@ -89,7 +81,11 @@ export default {
   name: "BaseLayout",
 
   computed: {
-    ...mapState('admin', ['topics', 'selectedTopic'])
+    ...mapState('admin', ['topics', 'selectedTopic', 'email']),
+
+    emailInitial() {
+      return this.email ? this.email.charAt(0).toUpperCase() : '';
+    }
   },
 
   mounted() {
@@ -130,5 +126,15 @@ export default {
 #topics .nav-item {
   cursor: pointer;
   user-select: none;
+}
+
+.email-icon {
+  font-size: 15px;
+}
+
+.email-icon>span {
+  display: block;
+  width: 100%;
+  text-align: center;
 }
 </style>

@@ -93,7 +93,6 @@ class AuthService {
       current_password: passwordDetails.currentPassword,
       new_password: passwordDetails.newPassword
     }).then(response => {
-      console.log(response);
       return response.data;
     });
 }
