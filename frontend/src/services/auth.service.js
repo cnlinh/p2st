@@ -10,7 +10,8 @@ class AuthService {
         password: user.password
       })
       .then(response => {
-        if (response.data.access) {
+        if (response.data) {
+          sessionStorage.setItem('refresh', JSON.stringify(response.data.refresh));
           sessionStorage.setItem('token', JSON.stringify(response.data.access));
           sessionStorage.setItem('email', user.username);
         }
@@ -20,6 +21,7 @@ class AuthService {
   }
 
   logout() {
+    sessionStorage.removeItem('refresh');
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('email');
   }
