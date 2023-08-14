@@ -81,7 +81,7 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label required" for="name">Student ID</label>
-                  <input v-model="studentId" class="form-control" type="text" id="name" placeholder="Enter student id"
+                  <input v-model="studentId" class="form-control" type="text" id="student-id" placeholder="Enter student id"
                     @input="clearError('name')" />
                   <span class="text-danger">{{ validationErrors.studentId }}</span>
                 </div>
