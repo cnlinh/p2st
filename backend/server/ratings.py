@@ -45,7 +45,7 @@ class RatingsView(APIView):
             pass
         except Exception as e:
             logger.error(e)
-            raise exceptions.APIException(str(e))
+            raise exceptions.APIException("Internal server error")
 
         try:
             rating = save_rating(
@@ -54,7 +54,7 @@ class RatingsView(APIView):
             return Response({"id": rating.id}, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(e)
-            raise exceptions.APIException(str(e))
+            raise exceptions.APIException("Internal server error")
 
     def get(self, request, id):
         message_id = id
@@ -69,7 +69,7 @@ class RatingsView(APIView):
             )
         except Exception as e:
             logger.error(e)
-            raise exceptions.APIException(str(e))
+            raise exceptions.APIException("Internal server error")
 
 
 def get_rating(message_id: int, user_id: int) -> Rating:

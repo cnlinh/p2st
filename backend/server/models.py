@@ -5,8 +5,32 @@ from pgvector.django import VectorField
 from authuser.models import User
 
 
+class Module(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    code = models.CharField(max_length=6)
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "modules"
+
+
+class Enrollment(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "enrollments"
+        unique_together = (("user", "module"),)
+
+
 class Topic(models.Model):
     id = models.BigAutoField(primary_key=True)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
@@ -18,6 +42,7 @@ class Topic(models.Model):
 class Conversation(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:

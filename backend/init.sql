@@ -13,7 +13,7 @@ CREATE TABLE users (
     student_id VARCHAR(9) UNIQUE NOT NULL, -- NUS student ID
     email character varying(254) UNIQUE NOT NULL,
     password VARCHAR(128) NOT NULL,
-    name character varying(200) NOT NULL,
+    name VARCHAR(100) NOT NULL,
 
     is_staff boolean NOT NULL,
     is_active boolean NOT NULL,
@@ -25,19 +25,42 @@ CREATE TABLE users (
     CONSTRAINT user_email_key UNIQUE (email)
 );
 
+CREATE table modules (
+  id BIGSERIAL PRIMARY KEY,
+  code VARCHAR(6) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE table enrollments (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  module_id BIGINT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE (user_id, module_id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (module_id) REFERENCES modules(id)
+);
+
 CREATE TABLE topics (
   id BIGSERIAL PRIMARY KEY,
+  module_id BIGINT NOT NULL,
   name VARCHAR(50) NOT NULL,  
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (module_id) REFERENCES modules(id)
 );
 
 
 CREATE TABLE conversations (
   id BIGSERIAL PRIMARY KEY,
   user_id BIGINT NOT NULL,
+  topic_id BIGINT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (topic_id) REFERENCES topics(id)
 );
 
 CREATE TYPE ROLE AS ENUM ('user', 'system');

@@ -186,14 +186,3 @@ def generate_follow_up_questions(past_messages):
         re.sub("^\d+\.\s", "", question) for question in question_list if question
     ]
     return processed_questions_list
-
-class TopicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Topic
-        fields = ['id', 'name', 'created_at']
-
-class TopicView(APIView):
-    def get(self, request):
-        topics = Topic.objects.all()
-        serializer = TopicSerializer(topics, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
