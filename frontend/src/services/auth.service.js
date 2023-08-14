@@ -86,6 +86,17 @@ class AuthService {
       return response.data;
     });
   }
+
+  changePassword(passwordDetails) {
+    return axios.post(`${API_URL}change-password`, {
+      email: passwordDetails.email,
+      current_password: passwordDetails.currentPassword,
+      new_password: passwordDetails.newPassword
+    }).then(response => {
+      console.log(response);
+      return response.data;
+    });
+}
 }
 
 export default new AuthService();
