@@ -5,6 +5,7 @@ import PageHome from "../views/PageHome.vue"
 import PageLogin from "../views/PageLogin.vue"
 import PageLogout from "../views/PageLogout.vue"
 import PageRegister from "../views/PageRegister.vue"
+import PageChangePassword from "../views/PageChangePassword.vue"
 
 const routes = [
   {
@@ -30,6 +31,10 @@ const routes = [
   {
     path: "/register",
     component: PageRegister,
+  },
+  {
+    path: "/change-password",
+    component: PageChangePassword,
   },
 ];
 

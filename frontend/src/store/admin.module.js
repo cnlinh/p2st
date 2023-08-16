@@ -5,13 +5,15 @@ const initialState = {
   selectedTopic: null,
   selectedConversation: null,
   messages: [],
+  email: null,
 }
 
 export const admin = {
   namespaced: true,
   state: initialState,
-  actions: {    
+  actions: {
     async initData({ dispatch }) {
+      await dispatch('loadEmailFromSession');
       await dispatch('fetchTopics');
     },
 
@@ -53,6 +55,13 @@ export const admin = {
     selectTopic({ commit }, topicId) {
       commit('SET_SELECTED_TOPIC', topicId);
     },
+
+    loadEmailFromSession({ commit }) {
+      const email = sessionStorage.getItem('email');
+      if (email) {
+        commit('SET_EMAIL', email);
+      }
+    },
   },
   mutations: {
     SET_TOPICS(state, topics) {
@@ -66,6 +75,9 @@ export const admin = {
     },
     SET_SELECTED_CONVERSATION(state, conversationId) {
       state.selectedConversation = conversationId;
-    }
+    },
+    SET_EMAIL(state, email) {
+      state.email = email;
+    },
   },
 };

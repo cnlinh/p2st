@@ -731,10 +731,6 @@ var chatInit = function chatInit() {
     var TargetChatArea = document.querySelector(Selector.CHAT_CONTENT_SCROLL_AREA_ACTIVE);
     setScrollbarPosition(TargetChatArea);
   }); // Emoji append in message text
-
-  $chatEmojiarea && window.picker.on(Events.EMOJI, function (selection) {
-    document.querySelector(Selector.EMOJIEAREA_EDITOR).innerHTML += selection.emoji;
-  });
 };
 /* -------------------------------------------------------------------------- */
 
