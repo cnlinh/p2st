@@ -12,14 +12,6 @@
         <!-- Navigation -->
         <div class="navbar-vertical-content scrollbar">
           <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
-            <li class="nav-item">
-              <router-link to="/home" class="nav-link">
-                <div class="d-flex align-items-center">
-                  <span class="nav-link-icon"><span class="fas fa-home"></span></span><span
-                    class="nav-link-text ps-1">Home</span>
-                </div>
-              </router-link>
-            </li>
             <div class="nav-link dropdown-indicator">
               <div class="d-flex align-items-center"><span class="nav-link-icon"><span
                     class="fas fa-book"></span></span><span class="nav-link-text ps-1">Topics</span>

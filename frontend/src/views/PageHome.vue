@@ -25,6 +25,10 @@
             </form>
           </div>
         </div>
+        <!-- Overlay message when no topic is selected -->
+        <div v-if="!selectedTopic" class="overlay-no-topic">
+          Select a topic to continue
+        </div>
       </div>
     </template>
   </BaseLayout>
@@ -57,11 +61,13 @@ export default {
   watch: {
     selectedTopic(newTopicId, oldTopicId) {
       if (newTopicId !== oldTopicId) {
+        this.recommendedQuestions = [];
         this.fetchConversation(newTopicId);
       }
     },
     selectedConversation(newConversationId, oldConversationId) {
       if (newConversationId !== oldConversationId) {
+        this.recommendedQuestions = [];
         this.fetchMessages(newConversationId);
         this.fetchRecommendedQuestions();
       }
@@ -88,6 +94,7 @@ export default {
         editor.textContent = '';
         await this.fetchMessages(this.selectedConversation);
         await this.fetchRecommendedQuestions();
+        console.log(this.messages);
       } catch (error) {
         console.error('Error sending message:', error);
       }
@@ -130,4 +137,20 @@ export default {
 @import "../assets/css/theme.css";
 
 @import "https://fonts.googleapis.com/css?family=Open+Sans:300,400,500,600,700%7cPoppins:300,400,500,600,700,800,900&amp;display=swap";
+
+.overlay-no-topic {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8); /* semi-transparent white */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #555;
+  z-index: 10; /* Ensure the overlay appears above the chat content */
+}
 </style>

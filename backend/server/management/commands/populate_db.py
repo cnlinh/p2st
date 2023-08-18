@@ -56,12 +56,19 @@ MODULES = [
         "code": "CS3243",
         "name": "Introduction to Artificial Intelligence",
         "topics": [
-            "Intro to AI/Agents",
-            "Problem-solving via Search",
-            "Adversarial Search",
+            "Introduction to AI; Problem Environments and Intelligence Agents",
+            "Uninformed Search",
+            "Informed Search",
+            "Local Search",
             "Constraint Satisfaction Problems",
+            "Adversarial Search",
             "Logical Agents",
-            "Uncertainty and Bayesian Belief Networks",
+            "Bayesian Networks",
+            "Project 1.1",
+            "Project 1.2",
+            "Project 2.1",
+            "Project 2.2",
+            "Project 3",
         ],
     }
 ]

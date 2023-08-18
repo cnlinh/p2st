@@ -8,8 +8,8 @@
     <div class="flex-1">
       <div class="w-xxl-75">
         <div class="hover-actions-trigger d-flex align-items-center">
-          <div class="chat-message bg-200 p-2 rounded-2" v-if="role === 'assistant'">{{ content }}</div>
-          <div class="bg-primary text-white p-2 rounded-2 chat-message light" v-else>{{ content }}</div>
+          <pre class="formatted-text chat-message bg-200 p-2 rounded-2" v-if="role === 'assistant'">{{ content }}</pre>
+          <pre class="formatted-text chat-message bg-primary text-white p-2 rounded-2 light" v-else>{{ content }}</pre>
           <ul class="hover-actions position-relative list-inline mb-0 text-400 ms-2">
             <li class="list-inline-item">
               <a class="chat-option" :class="{ 'highlighted': voteStatus === 'upvote' }" href="#"
@@ -86,5 +86,10 @@ export default {
 <style scoped>
 .highlighted {
   color: #ff5722;
+}
+
+.formatted-text {
+  white-space: pre-line;
+  font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 </style>

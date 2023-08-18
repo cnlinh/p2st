@@ -164,7 +164,7 @@ def generate_follow_up_questions(past_messages):
         {
             "id": None,
             "role": "user",
-            "content": "generate three follow up questions for the current conversation",
+            "content": "please provide a list of three follow-up questions for our current conversation without any introduction",
         }
     )
 

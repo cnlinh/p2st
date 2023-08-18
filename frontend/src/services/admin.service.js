@@ -85,9 +85,6 @@ class AdminService {
   rateMessage(id, score) {
     return axios
       .post(`${API_URL}ratings/${id}`, { score }, { headers: authHeader() })
-      .then((response) => {
-        console.log(response);
-      })
       .catch(error => {
         console.error("Error rating message:", error);
         throw error;
