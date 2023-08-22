@@ -6,6 +6,8 @@ const initialState = {
   selectedConversation: null,
   messages: [],
   email: null,
+  enrolledModules: [],
+  selectedModule: null,
 }
 
 export const admin = {
@@ -13,13 +15,22 @@ export const admin = {
   state: initialState,
   actions: {
     async initData({ dispatch }) {
-      await dispatch('loadEmailFromSession');
-      await dispatch('fetchTopics');
+      await dispatch('fetchStudentDetails');
     },
 
-    async fetchTopics({ commit }) {
+    async fetchStudentDetails({ commit }) {
       try {
-        const topics = await AdminService.listTopics();
+        const response = await AdminService.getStudentDetails();
+        commit('SET_MODULES', response.enrolled_modules);
+        commit('SET_EMAIL', response.email);
+      } catch (error) {
+        console.error('Error fetching details:', error);
+      }
+    },
+
+    async fetchTopics({ commit }, moduleId) {
+      try {
+        const topics = await AdminService.listTopics(moduleId);
         commit('SET_TOPICS', topics);
       } catch (error) {
         console.error('Error fetching topics:', error);
@@ -44,7 +55,6 @@ export const admin = {
       } catch (error) {
         if (error.response?.status === 404) {
           const conversation = await AdminService.initConversation(topicId);
-          console.log(conversation)
           commit('SET_SELECTED_CONVERSATION', conversation.id);
         }
 
@@ -56,11 +66,8 @@ export const admin = {
       commit('SET_SELECTED_TOPIC', topicId);
     },
 
-    loadEmailFromSession({ commit }) {
-      const email = sessionStorage.getItem('email');
-      if (email) {
-        commit('SET_EMAIL', email);
-      }
+    selectModule({ commit }, moduleId) {
+      commit('SET_SELECTED_MODULE', moduleId);
     },
   },
   mutations: {
@@ -78,6 +85,12 @@ export const admin = {
     },
     SET_EMAIL(state, email) {
       state.email = email;
+    },
+    SET_MODULES(state, modules) {
+      state.enrolledModules = modules;
+    },
+    SET_SELECTED_MODULE(state, moduleId) {
+      state.selectedModule = moduleId;
     },
   },
 };

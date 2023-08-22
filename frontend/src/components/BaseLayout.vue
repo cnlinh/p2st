@@ -4,7 +4,7 @@
     <nav class="navbar navbar-light navbar-vertical navbar-expand-xl">
       <div class="d-flex align-items-center">
         <a class="navbar-brand" href="/home">
-          <div class="d-flex align-items-center py-3"><span class="font-sans-serif text-black">CS3243</span>
+          <div class="d-flex align-items-center py-3"><span class="font-sans-serif text-black">P2ST</span>
           </div>
         </a>
       </div>
@@ -13,13 +13,28 @@
         <div class="navbar-vertical-content scrollbar">
           <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
             <div class="nav-link dropdown-indicator">
+              <div class="d-flex align-items-center">
+                <span class="nav-link-icon"><span class="fas fa-layer-group"></span></span>
+                <span class="nav-link-text ps-1">Modules</span>
+              </div>
+            </div>
+            <ul class="nav" id="modules">
+              <li class="nav-item" v-for="module in enrolledModules" :key="module"
+                :class="{ active: module === selectedModule }" @click="selectModule(module)">
+                <div class="d-flex align-items-center">
+                  <span class="nav-link-icon"></span>
+                  <span class="nav-link-text ps-1">{{ module }}</span>
+                </div>
+              </li>
+            </ul>
+            <div class="nav-link dropdown-indicator">
               <div class="d-flex align-items-center"><span class="nav-link-icon"><span
                     class="fas fa-book"></span></span><span class="nav-link-text ps-1">Topics</span>
               </div>
             </div>
             <ul class="nav" id="topics">
               <li class="nav-item" v-for="topic in topics" :key="topic.id" :class="{ active: topic.id === selectedTopic }"
-                @click="selectTopicHandler(topic.id)">
+                @click="selectTopic(topic.id)">
                 <div class="d-flex align-items-center">
                   <span class="nav-link-icon"></span>
                   <span class="nav-link-text ps-1">{{ topic.name }}</span>
@@ -42,7 +57,7 @@
       <!-- top nav bar -->
       <nav class="navbar navbar-light navbar-glass navbar-top navbar-expand">
         <a class="navbar-brand me-1 me-sm-3" href="/home">
-          <div class="d-flex align-items-center"><span class="font-sans-serif text-black">CS3243</span>
+          <div class="d-flex align-items-center"><span class="font-sans-serif text-black">P2ST</span>
           </div>
         </a>
         <ul class="navbar-nav navbar-nav-icons ms-auto flex-row align-items-center">
@@ -67,32 +82,35 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 
 export default {
   name: "BaseLayout",
 
   computed: {
-    ...mapState('admin', ['topics', 'selectedTopic', 'email']),
+    ...mapState('admin', ['topics', 'selectedTopic', 'email', 'enrolledModules', 'selectedModule']),
 
     emailInitial() {
       return this.email ? this.email.charAt(0).toUpperCase() : '';
     }
   },
 
-  mounted() {
-    this.$store.dispatch('admin/initData');
-  },
-
   methods: {
+    ...mapActions('admin', ['fetchTopics', 'fetchModules', 'selectTopic', 'selectModule']),
+    ...mapActions('auth', ['logout']),
+
     handleLogout() {
-      this.$store.dispatch("auth/logout").then(() => {
+      this.logout().then(() => {
         this.$router.push("/logout");
       });
     },
+  },
 
-    selectTopicHandler(topicId) {
-      this.$store.dispatch('admin/selectTopic', topicId);
+  watch: {
+    selectedModule(newModule, oldModule) {
+      if (newModule !== oldModule) {
+        this.fetchTopics(newModule);
+      }
     }
   },
 };

@@ -4,11 +4,11 @@ import authHeader from './auth-header';
 const API_URL = 'http://localhost:8000/api/';
 
 class AdminService {
-  listTopics() {
+  listTopics(selectedModule) {
     return axios
-      .get(`${API_URL}topics`, { headers: authHeader() })
+      .get(`${API_URL}topics?module=${selectedModule}`, { headers: authHeader() })
       .then((response) => {
-        return response.data
+        return response.data;
       })
       .catch(error => {
         console.error("Error fetching topics:", error);
@@ -89,6 +89,16 @@ class AdminService {
         console.error("Error rating message:", error);
         throw error;
       });
+  }
+
+  getStudentDetails() {
+    return axios
+      .get(`${API_URL}me`, {
+        headers: authHeader(),
+      })
+      .then((response) => {
+        return response.data;
+      })
   }
 }
 
