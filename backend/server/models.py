@@ -31,7 +31,7 @@ class Enrollment(models.Model):
 class Topic(models.Model):
     id = models.BigAutoField(primary_key=True)
     module = models.ForeignKey(Module, on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
