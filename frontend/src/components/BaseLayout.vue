@@ -19,11 +19,11 @@
               </div>
             </div>
             <ul class="nav" id="modules">
-              <li class="nav-item" v-for="module in enrolledModules" :key="module"
-                :class="{ active: module === selectedModule }" @click="selectModule(module)">
+              <li class="nav-item" v-for="moduleCode in enrolledModules" :key="moduleCode"
+                :class="{ active: moduleCode === selectedModule }" @click="selectModule(moduleCode)">
                 <div class="d-flex align-items-center">
                   <span class="nav-link-icon"></span>
-                  <span class="nav-link-text ps-1">{{ module }}</span>
+                  <span class="nav-link-text ps-1">{{ moduleCode }}</span>
                 </div>
               </li>
             </ul>
@@ -131,6 +131,11 @@ export default {
 .active,
 .active * {
   color: #fff !important;
+}
+
+#modules .nav-item {
+  cursor: pointer;
+  user-select: none;
 }
 
 #topics .nav-item {
