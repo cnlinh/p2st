@@ -46,7 +46,7 @@ CREATE table enrollments (
 CREATE TABLE topics (
   id BIGSERIAL PRIMARY KEY,
   module_id BIGINT NOT NULL,
-  name VARCHAR(50) NOT NULL,  
+  name VARCHAR(100) NOT NULL,  
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (module_id) REFERENCES modules(id)
