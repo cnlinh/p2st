@@ -53,10 +53,8 @@ export const admin = {
         const conversation = await AdminService.getConversationByTopic(topicId);
         commit('SET_SELECTED_CONVERSATION', conversation.id);
       } catch (error) {
-        if (error.response?.status === 404) {
-          const conversation = await AdminService.initConversation(topicId);
-          commit('SET_SELECTED_CONVERSATION', conversation.id);
-        }
+        const conversation = await AdminService.initConversation(topicId);
+        commit('SET_SELECTED_CONVERSATION', conversation.id);
 
         console.error('Error fetching conversation:', error);
       }

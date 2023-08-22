@@ -96,7 +96,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('admin', ['fetchTopics', 'fetchModules', 'selectTopic', 'selectModule']),
+    ...mapActions('admin', ['initData', 'fetchTopics', 'fetchModules', 'selectTopic', 'selectModule']),
     ...mapActions('auth', ['logout']),
 
     handleLogout() {
@@ -104,6 +104,10 @@ export default {
         this.$router.push("/logout");
       });
     },
+  },
+
+  async mounted() {
+    await this.initData();
   },
 
   watch: {
