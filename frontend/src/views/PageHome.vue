@@ -27,7 +27,7 @@
         </div>
         <!-- Overlay message when no topic is selected -->
         <div v-if="!selectedTopic" class="overlay-no-topic">
-          Select a topic to continue
+          Select a module and a topic to continue
         </div>
       </div>
     </template>
@@ -94,7 +94,6 @@ export default {
         editor.textContent = '';
         await this.fetchMessages(this.selectedConversation);
         await this.fetchRecommendedQuestions();
-        console.log(this.messages);
       } catch (error) {
         console.error('Error sending message:', error);
       }

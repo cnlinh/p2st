@@ -3,7 +3,7 @@
     <div class="col-sm-10 col-md-8 col-lg-6 col-xl-5 col-xxl-4">
       <div class="d-flex flex-center mb-4"><a class="navbar-brand" href="/home">
           <div class="d-flex align-items-center py-3"><span
-              class="font-sans-serif fw-bolder fs-5 d-inline-block text-black">CS3243</span>
+              class="font-sans-serif fw-bolder fs-5 d-inline-block text-black">P2ST</span>
           </div>
         </a></div>
       <div class="card">
