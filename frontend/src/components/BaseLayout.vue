@@ -33,8 +33,8 @@
               </div>
             </div>
             <ul class="nav" id="topics">
-              <li class="nav-item" v-for="topic in topics" :key="topic.id" :class="{ active: topic.id === selectedTopic }"
-                @click="selectTopic(topic.id)">
+              <li class="nav-item" v-for="topic in topics" :key="topic?.id" :class="{ active: topic?.id === selectedTopic?.id }"
+                @click="selectTopic(topic)">
                 <div class="d-flex align-items-center">
                   <span class="nav-link-icon"></span>
                   <span class="nav-link-text ps-1">{{ topic.name }}</span>

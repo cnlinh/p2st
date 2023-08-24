@@ -48,20 +48,22 @@ export const admin = {
       }
     },
 
-    async fetchConversation({ commit }, topicId) {
+    async fetchConversation({ commit }, topic) {
       try {
-        const conversation = await AdminService.getConversationByTopic(topicId);
+        const conversation = await AdminService.getConversationByTopic(topic.id);
         commit('SET_SELECTED_CONVERSATION', conversation.id);
       } catch (error) {
-        const conversation = await AdminService.initConversation(topicId);
+        console.log(topic);
+        const conversation = await AdminService.initConversation(topic?.id);
+        await AdminService.createMessageForConversation(conversation?.id, topic?.id, `What are good questions to ask when learning about ${topic?.name}?`);
         commit('SET_SELECTED_CONVERSATION', conversation.id);
 
         console.error('Error fetching conversation:', error);
       }
     },
 
-    selectTopic({ commit }, topicId) {
-      commit('SET_SELECTED_TOPIC', topicId);
+    selectTopic({ commit }, topic) {
+      commit('SET_SELECTED_TOPIC', topic);
     },
 
     selectModule({ commit }, moduleId) {
@@ -72,8 +74,8 @@ export const admin = {
     SET_TOPICS(state, topics) {
       state.topics = topics;
     },
-    SET_SELECTED_TOPIC(state, topicId) {
-      state.selectedTopic = topicId;
+    SET_SELECTED_TOPIC(state, topic) {
+      state.selectedTopic = topic;
     },
     SET_MESSAGES(state, messages) {
       state.messages = messages;
