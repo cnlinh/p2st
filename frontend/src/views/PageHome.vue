@@ -23,6 +23,11 @@
               <input class="d-none" type="file" id="chat-file-upload" />
               <button class="btn btn-sm btn-send shadow-none" type="submit">Send</button>
             </form>
+
+            <!-- Loading overlay -->
+            <div v-if="isLoading" class="loading-overlay">
+              <div class="spinner"></div>
+            </div>
           </div>
         </div>
         <!-- Overlay message when no topic is selected -->
@@ -49,27 +54,33 @@ export default {
   },
 
   computed: {
-    ...mapState('admin', ['selectedTopic', 'messages', 'selectedConversation']),
+    ...mapState('admin', ['selectedTopic', 'selectedTopicName', 'messages', 'selectedConversation']),
   },
 
   data() {
     return {
       recommendedQuestions: [],
+      isLoading: false,
     };
   },
 
   watch: {
-    selectedTopic(newTopicId, oldTopicId) {
-      if (newTopicId !== oldTopicId) {
+    selectedTopic(newTopic, oldTopic) {
+      if (newTopic?.id !== oldTopic?.id) {
+        this.isLoading = true;
         this.recommendedQuestions = [];
-        this.fetchConversation(newTopicId);
+        this.fetchConversation(newTopic);
+        this.fetchRecommendedQuestions();
+        this.isLoading = false;
       }
     },
     selectedConversation(newConversationId, oldConversationId) {
       if (newConversationId !== oldConversationId) {
+        this.isLoading = true;
         this.recommendedQuestions = [];
         this.fetchMessages(newConversationId);
         this.fetchRecommendedQuestions();
+        this.isLoading = false;
       }
     },
     messages: {
@@ -89,13 +100,17 @@ export default {
         return;
       }
 
+      this.isLoading = true;
+
       try {
-        await AdminService.createMessageForConversation(this.selectedConversation, this.selectedTopic, editor.textContent);
+        await AdminService.createMessageForConversation(this.selectedConversation, this.selectedTopic?.id, editor.textContent);
         editor.textContent = '';
         await this.fetchMessages(this.selectedConversation);
         await this.fetchRecommendedQuestions();
       } catch (error) {
         console.error('Error sending message:', error);
+      } finally {
+        this.isLoading = false;
       }
     },
 
@@ -104,11 +119,15 @@ export default {
         return;
       }
 
+      this.isLoading = true;
+
       try {
         const lastMessageId = this.messages[this.messages.length - 1].id;
         this.recommendedQuestions = await AdminService.getRecommendedQuestionsForConversation(lastMessageId);
       } catch (error) {
         console.error('Error fetching recommended questions:', error);
+      } finally {
+        this.isLoading = false;
       }
     },
 
@@ -122,8 +141,10 @@ export default {
 
   async created() {
     if (this.selectedConversation) {
+      this.isLoading = true;
       await this.fetchMessages(this.selectedConversation);
       await this.fetchRecommendedQuestions();
+      this.isLoading = false;
     }
   },
 };
@@ -143,13 +164,44 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8); /* semi-transparent white */
+  background-color: rgba(255, 255, 255, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 18px;
   font-weight: bold;
   color: #555;
-  z-index: 10; /* Ensure the overlay appears above the chat content */
+  z-index: 10;
 }
-</style>
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+}
+
+.spinner {
+  border: 8px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 8px solid #000;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}</style>
