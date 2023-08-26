@@ -25,6 +25,6 @@ class SelfView(APIView):
         if request.user.is_superuser:
             enrolled_modules = Module.objects.all().values_list("code", flat=True)
         else:
-            enrolled_modules = Enrollment.objects.filter(user=request.user).values_list("module__code", flat=True)
+            enrolled_modules = Enrollment.objects.filter(student_id=request.user.student_id).values_list("module__code", flat=True)
         data["enrolled_modules"] = enrolled_modules
         return Response(data, status=status.HTTP_200_OK)
