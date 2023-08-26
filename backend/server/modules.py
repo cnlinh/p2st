@@ -34,6 +34,8 @@ class TopicView(APIView):
 
             serializer = TopicSerializer(topics, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        except Module.DoesNotExist:
+            return Response([], status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(e)
             return Response(
