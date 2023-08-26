@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from server.models import ExcludeFromCache, Module, Topic, Question, Answer
+from server.models import ExcludeFromCache, Module, Topic, Question, Answer, Role
 import server.conversation as conversation
 import tensorflow_hub as hub
 
@@ -76,7 +76,10 @@ MODULES = [
 DEFAULT_ANSWERS = {
     "CS3243": {
         "Project 1.1": "1. How do you write a depth-first search maze solver in python?\n2. How do you write a uniform-cost search maze solver in python?\n3. How do you optimise a depth-first search maze solver in python?\n4. How do you optimise a uniform-cost search maze solver in python?",
-        "Project 1.2": "1. How do you write a breadth-first search maze solver in python?\n2. How do you write an A* maze solver in python?\n3. What are some good heuristics for A* maze solver?\n4. How do you optimise a breadth-first search maze solver in python?\n5. How do you optimise an A* maze solver in python?"
+        "Project 1.2": "1. How do you write a breadth-first search maze solver in python?\n2. How do you write an A* maze solver in python?\n3. What are some good heuristics for A* maze solver?\n4. How do you optimise a breadth-first search maze solver in python?\n5. How do you optimise an A* maze solver in python?",
+        "Project 2.1": "This project is not released yet. Please check back in week 6!",
+        "Project 2.2": "This project is not released yet. Please check back in week 6!",
+        "Project 3": "This project is not released yet. Please check back later on in the course!",
     }
 }
 
@@ -110,7 +113,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        print(options["all"], options["generic_questions"], options["modules_and_topics"], options["default_first_answers"])
         run_all = False
         if options["all"]:
             run_all = True
@@ -148,7 +150,7 @@ class Command(BaseCommand):
                 topic = Topic.objects.get(name=topic_name, module=module)
                 question_text = f"What are good questions to ask when learning about {topic_name}?"
                 embedding = conversation.generate_embedding(self.embedding_model, question_text)
-                question = Question.objects.create(topic=topic, embedding=embedding, text=question_text)
+                question = Question.objects.create(topic=topic, embedding=embedding, text=question_text, created_by=Role.SYSTEM, difficulty=0.5)
                 Answer.objects.create(question=question, text=answer)
             self.stdout.write(
                 self.style.SUCCESS(
