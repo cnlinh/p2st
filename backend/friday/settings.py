@@ -156,9 +156,14 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "/var/log/p2st/backend.log",
+            "formatter": "verbose",
+        },
     },
     "root": {
-        "handlers": ["console"],
+        "handlers": ["console", "file"],
         "level": "DEBUG",  # change logging level here
     },
     "formatters": {

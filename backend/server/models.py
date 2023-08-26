@@ -7,7 +7,7 @@ from authuser.models import User
 
 class Module(models.Model):
     id = models.BigAutoField(primary_key=True)
-    code = models.CharField(max_length=6)
+    code = models.CharField(unique=True, max_length=6)
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     
@@ -21,14 +21,14 @@ class Module(models.Model):
 
 class Enrollment(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    student_id = models.CharField(max_length=9)
     module = models.ForeignKey(Module, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = "enrollments"
-        unique_together = (("user", "module"),)
+        unique_together = (("student_id", "module"),)
 
 
 class Topic(models.Model):

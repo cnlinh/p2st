@@ -1,7 +1,13 @@
 from django.core.management.base import BaseCommand, CommandError
-from server.models import ExcludeFromCache, Module, Topic
+from server.models import ExcludeFromCache, Module, Topic, Question, Answer, Role
 import server.conversation as conversation
 import tensorflow_hub as hub
+import openai
+import os
+
+openai.organization = os.getenv("OPENAI_ORG_ID")
+openai.api_key = os.getenv("OPENAI_API_KEY")
+MODEL = "gpt-3.5-turbo"
 
 GENERIC_QUESTIONS = [
     "Can you explain that further?",
@@ -73,14 +79,66 @@ MODULES = [
     }
 ]
 
+DEFAULT = "DEFAULT"
+
+DEFAULT_ANSWERS = {
+    "CS3243": {
+        "Introduction to AI; Problem Environments and Intelligence Agents": DEFAULT,
+        "Uninformed Search": DEFAULT,
+        "Informed Search": DEFAULT,
+        "Local Search": DEFAULT,
+        "Constraint Satisfaction Problems": DEFAULT,
+        "Adversarial Search": DEFAULT,
+        "Logical Agents": DEFAULT,
+        "Bayesian Networks": DEFAULT,
+        "Project 1.1": "1. How do you write a depth-first search maze solver in python?\n2. How do you write a uniform-cost search maze solver in python?\n3. How do you optimise a depth-first search maze solver in python?\n4. How do you optimise a uniform-cost search maze solver in python?",
+        "Project 1.2": "1. How do you write a breadth-first search maze solver in python?\n2. How do you write an A* maze solver in python?\n3. What are some good heuristics for A* maze solver?\n4. How do you optimise a breadth-first search maze solver in python?\n5. How do you optimise an A* maze solver in python?",
+        "Project 2.1": "This project is not released yet. Please check back in week 6!",
+        "Project 2.2": "This project is not released yet. Please check back in week 6!",
+        "Project 3": "This project is not released yet. Please check back later on in the course!",
+    }
+}
 
 class Command(BaseCommand):
     help = "Populates the database"
     embedding_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--all",
+            action="store_true",
+            help="Run all population scripts",
+        )
+
+        parser.add_argument(
+            "--generic_questions",
+            action="store_true",
+            help="Populate database with generic questions",
+        )
+
+        parser.add_argument(
+            "--modules_and_topics",
+            action="store_true",
+            help="Populate database with modules and topics",
+        )
+
+        parser.add_argument(
+            "--default_first_answers",
+            action="store_true",
+            help="Populate database with default first answers",
+        )
+
     def handle(self, *args, **options):
-        self.insert_generic_questions()
-        self.insert_modules_and_topics()
+        run_all = False
+        if options["all"]:
+            run_all = True
+
+        if run_all or options["generic_questions"]:
+            self.insert_generic_questions()
+        if run_all or options["modules_and_topics"]:
+            self.insert_modules_and_topics()
+        if run_all or options["default_first_answers"]:
+            self.insert_default_first_answers()
 
     def insert_generic_questions(self):
         for question in GENERIC_QUESTIONS:
@@ -98,5 +156,35 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS(
                     "Successfully populated db with module {}".format(m["code"])
+                )
+            )
+
+    def insert_default_first_answers(self):
+        def generate_answer(question: str) -> str:
+            messages = [{"role": "user", "content": question}]
+            response = openai.ChatCompletion.create(
+                model=MODEL,
+                messages=messages,
+                temperature=0,
+            )
+            model_response = response["choices"][0]["message"]["content"]
+            return model_response
+
+        for module_code, topics in DEFAULT_ANSWERS.items():
+            module = Module.objects.get(code=module_code)
+            for topic_name, answer in topics.items():
+                topic = Topic.objects.get(name=topic_name, module=module)
+                question_text = f"What are good questions to ask when learning about {topic_name}?"
+                embedding = conversation.generate_embedding(self.embedding_model, question_text)
+                question = Question.objects.create(topic=topic, embedding=embedding, text=question_text, created_by=Role.SYSTEM, difficulty=0.5)
+
+                if answer == DEFAULT:
+                    answer = generate_answer(question_text)
+                Answer.objects.create(question=question, text=answer)
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Successfully populated db with default first answers for module {}".format(
+                        module_code
+                    )
                 )
             )
