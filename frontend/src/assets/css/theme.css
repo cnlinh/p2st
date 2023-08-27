@@ -28295,7 +28295,7 @@ option:disabled {
 }
 
 .chat-content-body {
-  height: calc(100% - 4.25rem);
+  height: 100%;
 }
 .chat-content-body .scroll-content {
   position: relative;
