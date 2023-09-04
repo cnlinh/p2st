@@ -138,6 +138,10 @@ def get_conversation_messages(conversation_id: int) -> List[ChatGPTMessage]:
 def generate_answer(
     conversation_id: int, past_messages: List[ChatGPTMessage], question: str
 ):
+    # Limit the number of past messages to the last 4 if there are more
+    if len(past_messages) > 4:
+        past_messages = past_messages[-4:]
+
     messages = past_messages.copy()
     messages.append({"role": "user", "content": question})
     response = openai.ChatCompletion.create(
