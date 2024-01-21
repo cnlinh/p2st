@@ -2,8 +2,6 @@
 
 ## Environment Setup
 
----
-
 ### Virtual Environment
 
 We recommend using [virtual environments](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment) to manage our environment and dependencies.
@@ -66,9 +64,9 @@ sessions
  [X] 0001_initial
 ```
 
-## Developer Notes
-
 ---
+
+## Developer Notes
 
 ### Database
 
@@ -90,14 +88,29 @@ We can add an index to use approximate nearest neighbor search, which trades som
 
 Note: Let's only add an index when the query latency starts to degrade.
 
-### Django REST Framework
+---
 
-- Serializers provide serialization and deserialization, allowing parsed data to be converted back into complex types
-- When deserializing data, you always need to call `is_valid()` before attempting to access the validated data, or save an object instance
-- Calling `.save()` on a serializer will either create a new instance, or update an existing instance
--
+## Admin Stuff
 
-## Deployment
+### Creating an Admin Account (for lecturers and TAs)
+
+```
+python3 manage.py createsuperuser
+```
+
+### Changing the Password of a User
+
+```
+python manage.py changepassword <username>
+```
+
+### Create a Course
+
+Login to Postgres using psql and `INSERT INTO modules(code, name) VALUES ('CSXXXX', 'NAME');`
+
+### Create a Topic
+
+Login to Postgres using psql and `INSERT INTO topics(module_id, name) VALUES (<MODULE_ID>, 'NAME');`
 
 ### Startup Scripts
 
