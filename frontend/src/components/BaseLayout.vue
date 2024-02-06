@@ -76,7 +76,7 @@
                 style="background-color: black; width: 35px; height: 35px; border-radius: 5px;">
                 <span class="text-white">{{ emailInitial }}</span>
               </div>
-              <span>linh.caongoc12@gmail.com</span>
+              <span>{{ email }}</span>
             </div>
           </li>
         </ul>
