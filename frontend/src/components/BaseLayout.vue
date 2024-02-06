@@ -42,6 +42,14 @@
               </li>
             </ul>
             <li class="nav-item">
+              <!-- parent pages--><a class="nav-link" role="button" @click.prevent="handleChangeStudentId">
+                <div class="d-flex align-items-center">
+                  <span class="nav-link-icon"><span class="fas fa-id-card"></span></span><span
+                    class="nav-link-text ps-1">Change Student ID</span>
+                </div>
+              </a>
+            </li>
+            <li class="nav-item">
               <!-- parent pages--><a class="nav-link" role="button" @click.prevent="handleLogout">
                 <div class="d-flex align-items-center">
                   <span class="nav-link-icon"><span class="fas fa-door-open"></span></span><span
@@ -64,11 +72,11 @@
           <li class="nav-item">
             <!-- email display -->
             <div class="nav-link d-flex align-items-center">
-              <div class="email-icon d-flex align-items-center justify-content-center"
+              <div class="email-icon d-flex align-items-center justify-content-center me-1"
                 style="background-color: black; width: 35px; height: 35px; border-radius: 5px;">
                 <span class="text-white">{{ emailInitial }}</span>
               </div>
-              <span>{{ email }}</span>
+              <span>linh.caongoc12@gmail.com</span>
             </div>
           </li>
         </ul>
@@ -77,15 +85,22 @@
       <div class="main-content">
         <slot name="main-content"></slot>
       </div>
+
+      <ModalChangeStudentId ref="modalStudentId" @confirm="handleUpdateStudentId" />
     </div>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex';
+import ModalChangeStudentId from '@/components/modals/ModalChangeStudentId.vue';
 
 export default {
   name: "BaseLayout",
+
+  components: {
+    ModalChangeStudentId,
+  },
 
   computed: {
     ...mapState('admin', ['topics', 'selectedTopic', 'email', 'enrolledModules', 'selectedModule']),
@@ -98,6 +113,14 @@ export default {
   methods: {
     ...mapActions('admin', ['initData', 'fetchTopics', 'fetchModules', 'selectTopic', 'selectModule']),
     ...mapActions('auth', ['logout']),
+
+    handleChangeStudentId() {
+      this.$refs.modalStudentId.show();
+    },
+
+    handleUpdateStudentId() {
+
+    },
 
     handleLogout() {
       this.logout().then(() => {

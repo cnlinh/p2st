@@ -13,12 +13,12 @@ const routes = [
     path: "/",
     name: "PageHome",
     component: PageHome,
-    meta: { requiresAuth: true },
+    //meta: { requiresAuth: true },
   },
   {
     path: "/home",
     component: PageHome,
-    meta: { requiresAuth: true },
+    //meta: { requiresAuth: true },
   },
   {
     path: "/login",
