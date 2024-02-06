@@ -6,21 +6,21 @@ axios.interceptors.response.use(
   response => response,
   error => {
     const originalRequest = error.config;
-    
+
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       const refreshToken = JSON.parse(sessionStorage.getItem('refresh'));
-      
+
       if (!refreshToken) throw error;
-      
+
       return axios.post(`${API_URL}token/refresh`, { refresh: refreshToken })
         .then(res => {
           sessionStorage.setItem('token', JSON.stringify(res.data.access));
-          
+
           axios.defaults.headers['Authorization'] = 'Bearer ' + res.data.access;
           originalRequest.headers['Authorization'] = 'Bearer ' + res.data.access;
-          
+
           return axios(originalRequest);
         })
         .catch(err => {
@@ -29,7 +29,7 @@ axios.interceptors.response.use(
           window.location.href = '/login';
         });
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -95,7 +95,18 @@ class AuthService {
     }).then(response => {
       return response.data;
     });
-}
+  }
+
+  resetPassword(passwordDetails) {
+    return axios.post(`${API_URL}reset-password`, {
+      name: passwordDetails.name,
+      student_id: passwordDetails.studentId,
+      email: passwordDetails.email,
+      new_password: passwordDetails.newPassword
+    }).then(response => {
+      return response.data;
+    });
+  }
 }
 
 export default new AuthService();
