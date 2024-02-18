@@ -38,8 +38,11 @@
               </div>
               <div class="col-auto"><a class="fs--1" href="/change-password">Change Password</a></div>
             </div>
-            <div class="mb-3">
+            <div class="mb-1">
               <button class="btn btn-primary d-block w-100 mt-3" type="submit" name="submit">Log in</button>
+              <div class="col-auto fs--1 text-600 mt-3"><span class="mb-0 fw-semi-bold">Forget your password? </span>
+                <span><a href="/reset-password">Reset Password</a></span>
+              </div>
             </div>
           </form>
         </div>

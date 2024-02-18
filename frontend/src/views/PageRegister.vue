@@ -26,7 +26,7 @@
               <div class="mb-3">
                 <label class="form-label required" for="name">Student ID</label>
                 <input v-model="studentId" class="form-control" type="text" id="student-id" placeholder="Enter student id"
-                  @input="clearError('name')" />
+                  @input="clearError('studentId')" />
                 <span class="text-danger">{{ validationErrors.studentId }}</span>
               </div>
             </div>
