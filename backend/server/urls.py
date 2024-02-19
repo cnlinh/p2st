@@ -13,6 +13,7 @@ urlpatterns = [
     path("register", signup.SignupView.as_view(), name="register"),
     path("change-password", changepassword.ChangePasswordView.as_view(), name="change_password"),
     path("reset-password", resetpassword.ResetPasswordView.as_view(), name="reset_password"),
+    path("change-id", me.ChangeIDView.as_view(), name="change_id"),
     path(
         "conversations/<int:id>",
         conversation.ConversationView.as_view(),
