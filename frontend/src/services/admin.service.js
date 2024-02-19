@@ -100,6 +100,15 @@ class AdminService {
         return response.data;
       })
   }
+
+  changeStudentId(studentId) {
+    return axios
+    .post(`${API_URL}change-id`, { student_id: studentId }, { headers: authHeader() })
+    .catch(error => {
+      console.error("Error changing student id:", error);
+      throw error;
+    });
+  }
 }
 
 export default new AdminService()

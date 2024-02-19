@@ -14,6 +14,8 @@
             <div class="col-auto">
               <h5>Reset Password</h5>
             </div>
+            <div class="col-auto fs--1 text-600"><span class="mb-0 undefined">or</span> <span><a href="/login">Log
+                  in</a></span></div>
           </div>
           <form>
             <div class="mb-3">
@@ -46,6 +48,7 @@
                 placeholder="Confirm new password" @input="clearError('confirmNewPassword')" />
               <span class="text-danger">{{ validationErrors.confirmNewPassword }}</span>
             </div>
+            <span class="text-danger">{{ apiError }}</span>
             <div class="mb-3">
               <button type="button" class="btn btn-primary d-block w-100 mt-3" @click="submitResetPassword">
                 Reset Password
@@ -67,6 +70,7 @@ export default {
   data() {
     return {
       validationErrors: {},
+      apiError: "",
       name: "",
       studentId: "",
       email: "",
@@ -80,6 +84,7 @@ export default {
       if (this.validationErrors[fieldName]) {
         this.validationErrors[fieldName] = "";
       }
+      this.apiError = "";
     },
 
     validateForm() {
@@ -129,6 +134,24 @@ export default {
         });
       } catch (error) {
         console.log(error);
+
+        if (error.response && error.response.data) {
+          if (error.response.data.name) {
+            this.validationErrors.name = error.response.data.name.join("\n");
+          }
+          if (error.response.data.email) {
+            this.validationErrors.email = error.response.data.email.join("\n");
+          } 
+          if (error.response.data.student_id) {
+            this.validationErrors.studentId = error.response.data.student_id.join("\n");
+          }
+          if (error.response.data.new_password) {
+            this.validationErrors.newPassword = error.response.data.new_password.join("\n");
+          }
+          if (Array.isArray(error.response.data)) {
+            this.apiError = error.response.data.join("\n");
+          }
+        }
       }
     }
   },
