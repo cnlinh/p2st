@@ -10,7 +10,8 @@
           <form class="needs-validation" novalidate="">
             <div class="form-group">
               <label for="student-id" class="required">New Student ID</label>
-              <input v-model="studentId" type="text" class="form-control" id="student-id" placeholder="Enter new student ID" @input="clearError('studentId')">
+              <input v-model="studentId" type="text" class="form-control" id="student-id"
+                placeholder="Enter new student ID" @input="clearError('studentId')">
               <span class="text-danger">{{ validationErrors.studentId }}</span>
             </div>
           </form>
@@ -25,7 +26,9 @@
 </template>
 
 <script>
+import AdminService from '@/services/admin.service';
 import { Modal } from 'bootstrap';
+
 export default {
   name: "ModalChangeStudentId",
 
@@ -81,11 +84,15 @@ export default {
         return;
       }
       try {
-        //await AdminService.changeStudentId(this.studentId);
+        await AdminService.changeStudentId(this.studentId);
         this.confirm();
       } catch (error) {
         console.log(error);
-        // Handle errors, e.g., show error message
+        if (error.response && error.response.data) {
+          if (Array.isArray(error.response.data)) {
+            this.validationErrors.studentId = error.response.data.join("\n");
+          }
+        }
       }
     },
   },

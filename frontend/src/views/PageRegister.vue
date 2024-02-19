@@ -13,7 +13,7 @@
               <h5>Register</h5>
             </div>
             <div class="col-auto fs--1 text-600"><span class="mb-0 undefined">Have an account?</span> <span><a
-                  href="/login">Login</a></span></div>
+                  href="/login">Log in</a></span></div>
           </div>
           <form>
             <div class="row gx-2">
@@ -50,6 +50,7 @@
                 <span class="text-danger">{{ validationErrors.confirmPassword }}</span>
               </div>
             </div>
+            <span class="text-danger">{{ apiError }}</span>
             <div class="mb-3">
               <button type="button" class="btn btn-primary d-block w-100 mt-3" @click="submitUserDetails">
                 Create account
@@ -71,6 +72,7 @@ export default {
   data() {
     return {
       validationErrors: {},
+      apiError: "",
       name: "",
       studentId: "",
       email: "",
@@ -84,6 +86,7 @@ export default {
       if (this.validationErrors[fieldName]) {
         this.validationErrors[fieldName] = "";
       }
+      this.apiError = "";
     },
 
     validateForm() {
@@ -141,6 +144,21 @@ export default {
         });
       } catch (error) {
         console.log(error);
+
+        if (error.response && error.response.data) {
+          if (error.response.data.email) {
+            this.validationErrors.email = error.response.data.email.join("\n");
+          }
+          if (error.response.data.student_id) {
+            this.validationErrors.studentId = error.response.data.student_id.join("\n");
+          }
+          if (error.response.data.password) {
+            this.validationErrors.password = error.response.data.password.join("\n");
+          }
+          if (Array.isArray(error.response.data)) {
+            this.apiError = error.response.data.join("\n");
+          }
+        }
       }
     }
   },
