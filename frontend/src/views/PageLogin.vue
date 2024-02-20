@@ -105,7 +105,9 @@ export default {
           error.toString();
 
         if (this.message === "Request failed with status code 500") {
-          this.message = "Wrong password/username!";
+          this.message = "Wrong email/password!";
+        } else if (this.message === "Request failed with status code 401") {
+          this.message = "Wrong email/password!";
         }
       }
     },

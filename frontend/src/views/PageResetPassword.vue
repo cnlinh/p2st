@@ -95,7 +95,7 @@ export default {
       }
 
       if (!this.studentId) {
-        this.validationErrors.name = "Student ID is required";
+        this.validationErrors.studentId = "Student ID is required";
       }
 
       if (!this.email) {
