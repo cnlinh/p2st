@@ -111,9 +111,9 @@ class QuestionsRecommendationView(APIView):
             raise exceptions.APIException("Internal server error")
         for question in response:
             embeddings = generate_embedding(self.embedding_model, question)
-            #conversation.save_question(
-            #    qn.question.topic_id, question, embeddings, Role.SYSTEM
-            #)
+            conversation.save_question(
+                qn.question.topic_id, question, embeddings, Role.SYSTEM
+            )
         # TO-DO: Incorporate existing questions to recommend questions
         find_similar_questions(qn.question.topic_id, qn.question.embedding)
 
