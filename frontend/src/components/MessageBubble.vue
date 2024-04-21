@@ -8,8 +8,10 @@
     <div class="flex-1">
       <div class="w-xxl-75">
         <div class="hover-actions-trigger d-flex align-items-center">
-          <pre class="formatted-text chat-message bg-200 p-2 rounded-2" v-if="role === 'assistant'">{{ content }}</pre>
-          <pre class="formatted-text chat-message bg-primary text-white p-2 rounded-2 light" v-else>{{ content }}</pre>
+          <pre v-html="formattedContent" class="formatted-text chat-message bg-200 p-2 rounded-2"
+            v-if="role === 'assistant'"></pre>
+          <pre v-html="formattedContent" class="formatted-text chat-message bg-success text-white p-2 rounded-2 light"
+            v-else></pre>
           <ul class="hover-actions position-relative list-inline mb-0 text-400 ms-2">
             <li class="list-inline-item">
               <a class="chat-option" :class="{ 'highlighted': voteStatus === 'upvote' }" href="#"
@@ -59,6 +61,11 @@ export default {
   computed: {
     avatarSrc() {
       return this.role === 'user' ? require('../assets/img/team/3.jpg') : require('../assets/img/team/2.jpg');
+    },
+    formattedContent() {
+      return this.content
+        .replace(/```([^`]+)```/g, '<pre>$1</pre>') 
+        .replace(/`([^`]+)`/g, '<strong>$1</strong>'); 
     },
   },
 
