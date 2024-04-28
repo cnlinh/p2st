@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "server",
     "corsheaders",
+    'import_export',
 ]
 
 AUTH_USER_MODEL = "authuser.User"
